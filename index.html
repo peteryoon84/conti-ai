@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 콘티 생성기</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--surface:#111118;--surface2:#1a1a24;--surface3:#22222f;--border:#2a2a3a;--border2:#3a3a50;--accent:#e8ff47;--accent2:#ff6b35;--accent3:#4ecdc4;--text:#f0f0f8;--text2:#9090b0;--text3:#5a5a78;--red:#ff4560;--green:#00e396;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(232,255,71,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(232,255,71,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:100;background:rgba(10,10,15,0.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 2rem;}
+.header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:2rem;height:64px;}
+.logo{font-family:'Space Mono',monospace;font-size:1rem;font-weight:700;color:var(--accent);letter-spacing:-0.02em;white-space:nowrap;}
+.logo span{color:var(--text2);font-weight:400;}
+.steps{display:flex;align-items:center;flex:1;justify-content:center;}
+.step-btn{display:flex;align-items:center;gap:0.5rem;padding:0.4rem 1.2rem;background:none;border:none;cursor:pointer;color:var(--text3);font-family:'Space Mono',monospace;font-size:0.75rem;letter-spacing:0.05em;transition:all 0.2s;position:relative;}
+.step-btn.active{color:var(--accent);}
+.step-btn.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--accent);}
+.step-btn.done{color:var(--text2);}
+.step-btn.locked{cursor:not-allowed;opacity:0.3;}
+.step-num{width:20px;height:20px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;}
+.step-btn.active .step-num{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.step-divider{width:32px;height:1px;background:var(--border2);}
+
+main{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:2rem;}
+
+/* API BAR */
+.api-bar{display:flex;align-items:center;gap:1rem;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:8px;padding:0.875rem 1.25rem;margin-bottom:2rem;}
+.api-bar label{font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--accent2);letter-spacing:0.08em;white-space:nowrap;}
+.api-bar input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.75rem;color:var(--text);font-family:'Space Mono',monospace;font-size:0.8rem;outline:none;transition:border-color 0.2s;}
+.api-bar input:focus{border-color:var(--accent2);}
+.api-status{font-family:'Space Mono',monospace;font-size:0.7rem;padding:0.3rem 0.75rem;border-radius:20px;background:var(--surface2);border:1px solid var(--border);white-space:nowrap;}
+.api-status.ok{color:var(--green);border-color:var(--green);}
+.api-status.empty{color:var(--text3);}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.75rem;margin-bottom:1.25rem;}
+.card-label{font-family:'Space Mono',monospace;font-size:0.65rem;letter-spacing:0.12em;color:var(--text3);text-transform:uppercase;margin-bottom:0.875rem;}
+
+/* INPUTS */
+.input-text{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1rem;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s;}
+.input-text:focus{border-color:var(--accent);}
+textarea.input-text{min-height:220px;resize:vertical;line-height:1.7;}
+
+/* RATIO */
+.ratio-grid{display:flex;gap:0.75rem;flex-wrap:wrap;}
+.ratio-btn{padding:0.5rem 1.25rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-family:'Space Mono',monospace;font-size:0.8rem;cursor:pointer;transition:all 0.15s;}
+.ratio-btn:hover{border-color:var(--border2);color:var(--text);}
+.ratio-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700;}
+
+/* ── IMAGE STYLE SELECTOR ── */
+.style-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:0.75rem;margin-bottom:1rem;}
+.style-card{background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:0.6rem 0.5rem 0.5rem;cursor:pointer;transition:all 0.15s;text-align:center;position:relative;}
+.style-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.style-card.active{border-color:var(--accent);background:rgba(232,255,71,0.05);}
+.style-card.active::after{content:'✓';position:absolute;top:5px;right:7px;font-size:0.65rem;color:var(--accent);font-family:'Space Mono',monospace;}
+.style-card svg{width:100%;height:72px;display:block;margin-bottom:0.45rem;}
+.style-name{font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--text2);letter-spacing:0.02em;line-height:1.4;}
+.style-card.active .style-name{color:var(--accent);}
+.custom-style-row{display:flex;align-items:center;gap:0.75rem;margin-top:0.5rem;}
+.custom-style-row label{font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--text3);white-space:nowrap;}
+
+/* SAMPLE DROPDOWN */
+.sample-wrapper{position:relative;display:inline-block;}
+.sample-dropdown{position:absolute;top:calc(100% + 6px);left:0;width:300px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;overflow:hidden;opacity:0;visibility:hidden;transform:translateY(-4px);transition:all 0.15s;z-index:50;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+.sample-wrapper:hover .sample-dropdown{opacity:1;visibility:visible;transform:translateY(0);}
+.sample-item{display:block;width:100%;padding:0.75rem 1rem;background:none;border:none;border-bottom:1px solid var(--border);color:var(--text2);font-family:'Noto Sans KR',sans-serif;font-size:0.85rem;text-align:left;cursor:pointer;transition:all 0.15s;}
+.sample-item:hover{background:var(--surface3);color:var(--text);}
+.sample-item:last-child{border-bottom:none;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.65rem 1.4rem;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-family:'Space Mono',monospace;font-size:0.78rem;cursor:pointer;transition:all 0.15s;letter-spacing:0.02em;white-space:nowrap;}
+.btn:hover{border-color:var(--border2);color:var(--text);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700;}
+.btn-primary:hover{background:#d4eb2a;transform:translateY(-1px);box-shadow:0 4px 16px rgba(232,255,71,0.25);}
+.btn-success{background:var(--green);border-color:var(--green);color:var(--bg);font-weight:700;}
+.btn-success:hover{background:#00cc84;transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,227,150,0.25);}
+.btn-danger{border-color:var(--red);color:var(--red);}
+.btn-danger:hover{background:rgba(255,69,96,0.1);}
+.action-row{display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;}
+.ml-auto{margin-left:auto;}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+thead tr{background:var(--surface2);border-bottom:1px solid var(--border2);}
+th{padding:0.75rem 0.875rem;text-align:left;font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.08em;color:var(--text3);white-space:nowrap;font-weight:400;}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.15s;}
+tbody tr:hover{background:var(--surface2);}
+tbody tr:last-child{border-bottom:none;}
+td{padding:0.6rem 0.875rem;vertical-align:middle;color:var(--text2);}
+td.scene-cell{font-family:'Space Mono',monospace;font-size:0.8rem;color:var(--accent);font-weight:700;}
+.tag{display:inline-block;padding:0.18rem 0.55rem;border-radius:4px;font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.03em;white-space:nowrap;}
+.tag-purple{background:rgba(155,109,255,0.15);color:#9b6dff;border:1px solid rgba(155,109,255,0.3);}
+.tag-blue{background:rgba(78,205,196,0.15);color:var(--accent3);border:1px solid rgba(78,205,196,0.3);}
+.tag-orange{background:rgba(255,107,53,0.15);color:var(--accent2);border:1px solid rgba(255,107,53,0.3);}
+.tag-yellow{background:rgba(232,255,71,0.1);color:var(--accent);border:1px solid rgba(232,255,71,0.2);}
+.tag-green{background:rgba(0,227,150,0.1);color:var(--green);border:1px solid rgba(0,227,150,0.2);}
+td select{background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:0.25rem 0.4rem;color:var(--text);font-size:0.72rem;outline:none;cursor:pointer;font-family:'Space Mono',monospace;}
+
+/* ── VISUAL PICKER BUTTON in table ── */
+.pick-btn{display:inline-flex;align-items:center;gap:0.35rem;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;padding:0.28rem 0.55rem;cursor:pointer;font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--text2);transition:all 0.15s;white-space:nowrap;}
+.pick-btn:hover{border-color:var(--accent3);color:var(--accent3);}
+.pick-btn svg{width:30px;height:22px;flex-shrink:0;}
+
+/* ── VISUAL PICKER MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);opacity:0;visibility:hidden;transition:all 0.2s;}
+.modal-overlay.open{opacity:1;visibility:visible;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:2rem;width:min(980px,95vw);max-height:88vh;overflow-y:auto;}
+.modal-title{font-family:'Space Mono',monospace;font-size:0.85rem;color:var(--accent);letter-spacing:0.06em;margin-bottom:1.5rem;}
+.modal-section{margin-bottom:2rem;}
+.modal-section-label{font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;color:var(--text3);margin-bottom:0.875rem;text-transform:uppercase;padding-bottom:0.4rem;border-bottom:1px solid var(--border);}
+.vis-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:0.65rem;}
+.vis-item{background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:0.55rem 0.4rem 0.45rem;cursor:pointer;transition:all 0.15s;text-align:center;}
+.vis-item:hover{border-color:var(--border2);transform:translateY(-1px);}
+.vis-item.sel{border-color:var(--accent);background:rgba(232,255,71,0.06);}
+.vis-item svg{width:100%;height:60px;display:block;margin-bottom:0.35rem;}
+.vis-label{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--text3);line-height:1.35;}
+.vis-item.sel .vis-label{color:var(--accent);}
+.modal-footer{display:flex;justify-content:flex-end;gap:0.75rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);}
+
+/* STORYBOARD */
+.sb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.25rem;}
+.sb-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all 0.2s;}
+.sb-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+.sb-img-wrap{position:relative;background:var(--surface2);}
+.sb-img{width:100%;display:block;object-fit:cover;}
+.sb-placeholder,.sb-generating{width:100%;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;background:var(--surface2);color:var(--text3);font-family:'Space Mono',monospace;font-size:0.72rem;flex-direction:column;gap:0.5rem;}
+.spinner{width:26px;height:26px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.sb-regen{position:absolute;top:0.5rem;right:0.5rem;background:rgba(10,10,15,0.88);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-family:'Space Mono',monospace;font-size:0.62rem;padding:0.28rem 0.55rem;cursor:pointer;transition:all 0.15s;backdrop-filter:blur(4px);}
+.sb-regen:hover{border-color:var(--accent);color:var(--accent);}
+.sb-badge{position:absolute;top:0.5rem;left:0.5rem;background:rgba(10,10,15,0.9);border:1px solid var(--accent);border-radius:4px;color:var(--accent);font-family:'Space Mono',monospace;font-size:0.62rem;font-weight:700;padding:0.22rem 0.55rem;}
+.sb-info{padding:0.875rem 1rem;}
+.sb-title-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.45rem;}
+.sb-title{font-size:0.82rem;font-weight:700;color:var(--text);line-height:1.4;}
+.sb-dur{font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--text3);white-space:nowrap;margin-left:0.5rem;}
+.sb-tags{display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.65rem;}
+.sb-note{font-size:0.73rem;color:var(--text3);border-top:1px solid var(--border);padding-top:0.55rem;line-height:1.5;}
+
+.sec-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem;}
+.sec-title{font-size:1.15rem;font-weight:700;color:var(--text);}
+.sec-meta{font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--text3);}
+.gen-bar{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent3);border-radius:8px;padding:0.875rem 1.25rem;margin-bottom:1.25rem;display:none;}
+.gen-bar.on{display:block;}
+.gen-label{font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--text2);margin-bottom:0.45rem;display:flex;justify-content:space-between;}
+.gen-track{background:var(--surface2);border-radius:4px;height:4px;overflow:hidden;}
+.gen-fill{height:100%;background:var(--accent3);border-radius:4px;transition:width 0.3s;}
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:0.75rem 1.25rem;font-family:'Space Mono',monospace;font-size:0.78rem;color:var(--text);z-index:999;opacity:0;transform:translateY(8px);transition:all 0.2s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.error{border-left:3px solid var(--red);color:var(--red);}
+.toast.success{border-left:3px solid var(--green);color:var(--green);}
+/* STEP 0 INTERVIEW */
+.interview-wrap{max-width:720px;margin:0 auto;}
+.interview-title{font-size:1.5rem;font-weight:900;color:var(--text);margin-bottom:0.4rem;}
+.interview-sub{font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--text3);margin-bottom:2rem;letter-spacing:0.04em;}
+.chat-log{display:flex;flex-direction:column;gap:1rem;margin-bottom:1.5rem;min-height:120px;}
+.chat-q{display:flex;gap:0.75rem;align-items:flex-start;}
+.chat-q .avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--bg);font-family:'Space Mono',monospace;font-size:0.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.chat-q .bubble{background:var(--surface2);border:1px solid var(--border);border-radius:0 12px 12px 12px;padding:0.75rem 1rem;font-size:0.9rem;color:var(--text);line-height:1.6;flex:1;}
+.chat-q .qnum{font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--accent);margin-bottom:0.25rem;letter-spacing:0.06em;}
+.chat-a{display:flex;gap:0.75rem;align-items:flex-start;flex-direction:row-reverse;}
+.chat-a .avatar{background:var(--surface3);color:var(--text2);border:1px solid var(--border2);}
+.chat-a .bubble{background:var(--surface3);border:1px solid var(--border2);border-radius:12px 0 12px 12px;padding:0.75rem 1rem;font-size:0.9rem;color:var(--text2);line-height:1.6;}
+.answer-row{display:flex;gap:0.75rem;align-items:center;}
+.answer-row input{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:0.65rem 1rem;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s;}
+.answer-row input:focus{border-color:var(--accent);}
+.answer-row input::placeholder{color:var(--text3);}
+.progress-dots{display:flex;gap:0.4rem;margin-bottom:1.5rem;}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:all 0.3s;}
+.dot.done{background:var(--accent);}
+.dot.active{background:var(--accent);box-shadow:0 0 8px rgba(232,255,71,0.5);}
+.gen-scenario-bar{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent3);border-radius:8px;padding:1rem 1.25rem;margin-top:1rem;display:none;}
+.gen-scenario-bar.on{display:block;}
+.gen-scenario-bar p{font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--accent3);margin-bottom:0.5rem;}
+.gen-track2{background:var(--surface2);border-radius:4px;height:3px;overflow:hidden;}
+.gen-fill2{height:100%;background:linear-gradient(90deg,var(--accent3),var(--accent));border-radius:4px;animation:fillAnim 8s ease-in-out forwards;}
+@keyframes fillAnim{0%{width:0%}85%{width:88%}100%{width:88%}}
+.typing-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--text3);animation:blink 1.2s ease-in-out infinite;}
+.typing-dot:nth-child(2){animation-delay:0.2s;}
+.typing-dot:nth-child(3){animation-delay:0.4s;}
+@keyframes blink{0%,80%,100%{opacity:0.2}40%{opacity:1}}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--surface);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.step-panel{display:none;}
+.step-panel.active{display:block;}
+.style-badge{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(232,255,71,0.08);border:1px solid rgba(232,255,71,0.25);border-radius:6px;padding:0.25rem 0.65rem;font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--accent);}
+.trunc2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">CONTI<span>.AI</span></div>
+    <nav class="steps">
+      <button class="step-btn active" id="nav-0" onclick="goStep(0)"><span class="step-num">0</span>INTERVIEW</button>
+      <div class="step-divider"></div>
+      <button class="step-btn locked" id="nav-1" onclick="goStep(1)"><span class="step-num">1</span>SCENARIO</button>
+      <div class="step-divider"></div>
+      <button class="step-btn locked" id="nav-2" onclick="goStep(2)"><span class="step-num">2</span>SHOT LIST</button>
+      <div class="step-divider"></div>
+      <button class="step-btn locked" id="nav-3" onclick="goStep(3)"><span class="step-num">3</span>STORYBOARD</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- API KEY -->
+<div class="api-bar">
+  <label>GEMINI API KEY</label>
+  <input type="password" id="apiKey" placeholder="AIza..." oninput="updateApiStatus()" autocomplete="off">
+  <span class="api-status empty" id="apiStatus">미입력</span>
+  <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--accent2);text-decoration:none;white-space:nowrap;">키 발급 →</a>
+</div>
+
+<!-- STEP 0 — INTERVIEW -->
+<div class="step-panel active" id="step-0">
+  <div class="interview-wrap">
+    <div class="interview-title">🎬 시나리오 인터뷰</div>
+    <div class="interview-sub">9개 질문에 답하면 AI가 기승전결 시나리오를 자동으로 작성합니다.</div>
+
+    <div class="progress-dots" id="progressDots"></div>
+
+    <div class="chat-log" id="chatLog"></div>
+
+    <div class="answer-row" id="answerRow">
+      <input type="text" id="answerInput" placeholder="답변을 입력하세요..." onkeydown="if(event.key==='Enter')submitAnswer()">
+      <button class="btn btn-primary" onclick="submitAnswer()">다음 →</button>
+    </div>
+
+    <div class="gen-scenario-bar" id="genScenarioBar">
+      <p>✦ AI가 시나리오를 작성 중입니다... 잠시만 기다려주세요</p>
+      <div class="gen-track2"><div class="gen-fill2" id="genFill2"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 1 -->
+<div class="step-panel" id="step-1">
+
+  <div class="card">
+    <div class="card-label">PROJECT TITLE</div>
+    <input type="text" class="input-text" id="projectTitle" placeholder="프로젝트 제목을 입력하세요">
+  </div>
+
+  <div class="card">
+    <div class="card-label">ASPECT RATIO</div>
+    <div class="ratio-grid">
+      <button class="ratio-btn active" onclick="setRatio(this,'16:9')">16:9</button>
+      <button class="ratio-btn" onclick="setRatio(this,'9:16')">9:16</button>
+      <button class="ratio-btn" onclick="setRatio(this,'1:1')">1:1</button>
+      <button class="ratio-btn" onclick="setRatio(this,'4:3')">4:3</button>
+      <button class="ratio-btn" onclick="setRatio(this,'2.39:1')">2.39:1 시네마</button>
+    </div>
+  </div>
+
+  <!-- ★ IMAGE STYLE -->
+  <div class="card">
+    <div class="card-label">IMAGE STYLE — 콘티 이미지 전체 스타일 선택 (일관성 유지)</div>
+    <div class="style-grid" id="styleGrid"></div>
+    <div class="custom-style-row">
+      <label>CUSTOM →</label>
+      <input type="text" class="input-text" id="customStyle" placeholder="직접 입력 (예: ukiyo-e woodblock print, 1980s cel animation...)" style="padding:0.4rem 0.75rem;font-size:0.8rem;" oninput="onCustomStyle()">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">SCENARIO</div>
+    <textarea class="input-text" id="scenario" placeholder="← INTERVIEW 단계에서 자동으로 채워지거나, 직접 시나리오를 붙여넣으세요.&#10;씬별 클립 테이블이 포함된 형식이어야 Shot List가 자동 생성됩니다."></textarea>
+  </div>
+
+  <div class="action-row">
+    <button class="btn" onclick="goStep(0)">← 인터뷰</button>
+    <div class="sample-wrapper">
+      <button class="btn">📋 샘플 ▾</button>
+      <div class="sample-dropdown">
+        <button class="sample-item" onclick="loadSample(0)">🐾 호텔포포 — 반려견 호텔 광고 (30초)</button>
+        <button class="sample-item" onclick="loadSample(1)">🎨 빛의 연금술사 — SF 단편 드라마</button>
+        <button class="sample-item" onclick="loadSample(2)">📱 SNS 릴스 — 도시 라이프스타일</button>
+      </div>
+    </div>
+    <button class="btn" onclick="clearAll()">🗑 초기화</button>
+    <button class="btn-primary btn ml-auto" onclick="generateShotList()">Shot List 생성 →</button>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="step-panel" id="step-2">
+  <div class="sec-header">
+    <div>
+      <div class="sec-title" id="sl-title">Shot List</div>
+      <div class="sec-meta" id="sl-meta"></div>
+    </div>
+    <div class="action-row">
+      <button class="btn" onclick="goStep(1)">← 시나리오 수정</button>
+      <button class="btn" onclick="addShot()">+ 샷 추가</button>
+      <button class="btn-success btn" onclick="generateStoryboard()">🎬 콘티 생성 →</button>
+    </div>
+  </div>
+  <div style="margin-bottom:0.875rem;display:flex;align-items:center;gap:0.75rem;">
+    <span style="font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--text3);">선택 스타일:</span>
+    <span class="style-badge" id="styleBadge">—</span>
+    <span style="font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--text3);margin-left:0.5rem;">샷/앵글/구도 셀 클릭 → 시각적 선택기</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>씬</th><th>클립</th><th>내용 설명</th><th>시간</th>
+          <th>샷 사이즈 🖼</th><th>앵글 📐</th><th>구도 🎯</th>
+          <th>카메라 무빙</th><th>렌즈</th><th>트랜지션</th><th>자막</th><th>삭제</th>
+        </tr>
+      </thead>
+      <tbody id="shotBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="step-panel" id="step-3">
+  <div class="gen-bar" id="genBar">
+    <div class="gen-label"><span id="genText">생성 중...</span><span id="genCount"></span></div>
+    <div class="gen-track"><div class="gen-fill" id="genFill" style="width:0%"></div></div>
+  </div>
+  <div class="sec-header">
+    <div>
+      <div class="sec-title" id="sb-title">Storyboard</div>
+      <div class="sec-meta" id="sb-meta"></div>
+    </div>
+    <div class="action-row">
+      <button class="btn" onclick="goStep(2)">← Shot List</button>
+      <button class="btn" onclick="window.print()">🖨 PDF 저장</button>
+      <button class="btn-primary btn" onclick="regenAll()">🔄 전체 재생성</button>
+    </div>
+  </div>
+  <div class="sb-grid" id="sbGrid"></div>
+</div>
+</main>
+
+<!-- ★ VISUAL PICKER MODAL -->
+<div class="modal-overlay" id="pickerModal" onclick="modalOutside(event)">
+  <div class="modal">
+    <div class="modal-title">🎬 샷 시각적 선택기 — 클릭하여 선택</div>
+    <div id="pickerBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closePicker()">취소</button>
+      <button class="btn-primary btn" onclick="applyPicker()">적용</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  SVG PRIMITIVES
+// ══════════════════════════════════════════════════════
+function svgWrap(body,vb='0 0 100 70'){
+  return `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+}
+// Simple human silhouette: cx,cy = feet center, h = total height
+function human(cx,cy,h,fill='#9090b0'){
+  const hw=h*0.16, nh=h*0.22;
+  return `<ellipse cx="${cx}" cy="${cy-h+nh*0.5}" rx="${nh*0.55}" ry="${nh*0.6}" fill="${fill}"/>
+<rect x="${cx-hw}" y="${cy-h+nh}" width="${hw*2}" height="${h*0.38}" rx="2.5" fill="${fill}"/>
+<rect x="${cx-hw*0.75}" y="${cy-h*0.42}" width="${hw*0.62}" height="${h*0.3}" rx="2" fill="${fill}"/>
+<rect x="${cx+hw*0.13}" y="${cy-h*0.42}" width="${hw*0.62}" height="${h*0.3}" rx="2" fill="${fill}"/>`;
+}
+function ground(y){return `<line x1="5" y1="${y}" x2="95" y2="${y}" stroke="#2a2a3a" stroke-width="0.8"/>`;}
+function frameBox(x,y,w,h,col='#3a3a50'){
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${col}" stroke-width="1" rx="1.5"/>`;
+}
+function cutLine(y,col='rgba(255,107,53,0.55)'){
+  return `<line x1="5" y1="${y}" x2="95" y2="${y}" stroke="${col}" stroke-width="0.8" stroke-dasharray="3,2"/>`;
+}
+function camIcon(cx,cy,r=3.5,col='rgba(78,205,196,0.7)'){
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${col}" stroke="rgba(78,205,196,0.5)" stroke-width="0.8"/>`;
+}
+function arrow(x1,y1,x2,y2,col='rgba(78,205,196,0.7)'){
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
+  const ux=dx/len,uy=dy/len;
+  const ax=x2-ux*5-uy*3,ay=y2-uy*5+ux*3;
+  const bx=x2-ux*5+uy*3,by=y2-uy*5-ux*3;
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="1" stroke-dasharray="3,2"/>
+<polygon points="${x2},${y2} ${ax},${ay} ${bx},${by}" fill="${col}"/>`;
+}
+
+// ══════════════════════════════════════════════════════
+//  SHOT SIZE DATA
+// ══════════════════════════════════════════════════════
+const SHOT_SIZES=[
+  {id:'익스트림 와이드',short:'EWS',
+   svg:svgWrap(`${ground(60)}${human(50,60,12)}${frameBox(5,5,90,60)}
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">EWS</text>`)},
+  {id:'와이드',short:'WS',
+   svg:svgWrap(`${ground(60)}${human(50,60,20)}${frameBox(12,5,76,60)}
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">WS</text>`)},
+  {id:'미디엄 와이드',short:'MWS',
+   svg:svgWrap(`${ground(60)}${human(50,60,28)}${frameBox(18,8,64,57)}${cutLine(44)}
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">MWS · 허벅지~</text>`)},
+  {id:'미디엄',short:'MS',
+   svg:svgWrap(`${human(50,72,38)}${frameBox(18,12,64,53)}${cutLine(53)}
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">MS · 허리~</text>`)},
+  {id:'미디엄 클로즈업',short:'MCU',
+   svg:svgWrap(`${human(50,82,48)}${frameBox(16,14,68,51)}${cutLine(44)}
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">MCU · 가슴~</text>`)},
+  {id:'클로즈업',short:'CU',
+   svg:svgWrap(`${human(50,95,60)}${frameBox(14,14,72,51)}${cutLine(36)}
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">CU · 얼굴</text>`)},
+  {id:'익스트림 클로즈업',short:'ECU',
+   svg:svgWrap(`${human(50,115,78)}${frameBox(12,14,76,51)}
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">ECU · 눈·입</text>`)},
+];
+
+// ══════════════════════════════════════════════════════
+//  ANGLE DATA
+// ══════════════════════════════════════════════════════
+const ANGLES=[
+  {id:'아이레벨',
+   svg:svgWrap(`${ground(58)}${human(52,58,28)}
+   ${camIcon(8,36)}${arrow(11,36,42,36)}
+   <line x1="5" y1="36" x2="95" y2="36" stroke="rgba(232,255,71,0.15)" stroke-width="0.5" stroke-dasharray="2,3"/>
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">Eye Level</text>`)},
+  {id:'로우앵글',
+   svg:svgWrap(`${ground(60)}${human(55,60,30)}
+   ${camIcon(8,60)}${arrow(11,58,46,34)}
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">Low Angle ↑</text>`)},
+  {id:'하이앵글',
+   svg:svgWrap(`${ground(60)}${human(55,60,26)}
+   ${camIcon(8,10)}${arrow(11,12,46,40)}
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">High Angle ↓</text>`)},
+  {id:'버드아이뷰',
+   svg:svgWrap(`<ellipse cx="52" cy="44" rx="16" ry="6" fill="#2a2a3a"/>
+   <ellipse cx="52" cy="44" rx="6" ry="2.5" fill="#9090b0"/>
+   ${camIcon(50,8)}
+   <line x1="50" y1="11.5" x2="50" y2="36" stroke="rgba(78,205,196,0.6)" stroke-width="1" stroke-dasharray="3,2"/>
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">Bird's Eye</text>`)},
+  {id:'더치앵글',
+   svg:svgWrap(`${ground(60)}${human(52,60,28)}
+   ${frameBox(16,12,68,52)}
+   <rect x="16" y="12" width="68" height="52" fill="none" stroke="#9b6dff" stroke-width="1" rx="1.5" transform="rotate(-10 50 38)"/>
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">Dutch Angle</text>`)},
+  {id:'오버숄더',
+   svg:svgWrap(`${ground(60)}${human(28,60,22,'#3a3a50')}${human(68,58,26)}
+   ${arrow(38,38,58,34)}
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">Over Shoulder</text>`)},
+];
+
+// ══════════════════════════════════════════════════════
+//  COMPOSITION DATA
+// ══════════════════════════════════════════════════════
+const COMPS=[
+  {id:'룰오브써드',
+   svg:svgWrap(`${frameBox(8,5,84,58)}
+   <line x1="36" y1="5" x2="36" y2="63" stroke="rgba(232,255,71,0.2)" stroke-width="0.7" stroke-dasharray="3,2"/>
+   <line x1="64" y1="5" x2="64" y2="63" stroke="rgba(232,255,71,0.2)" stroke-width="0.7" stroke-dasharray="3,2"/>
+   <line x1="8" y1="24" x2="92" y2="24" stroke="rgba(232,255,71,0.2)" stroke-width="0.7" stroke-dasharray="3,2"/>
+   <line x1="8" y1="44" x2="92" y2="44" stroke="rgba(232,255,71,0.2)" stroke-width="0.7" stroke-dasharray="3,2"/>
+   ${human(64,63,24)}<circle cx="64" cy="24" r="2" fill="rgba(232,255,71,0.8)"/>
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">Rule of Thirds</text>`)},
+  {id:'센터프레임',
+   svg:svgWrap(`${frameBox(8,5,84,58)}
+   <line x1="50" y1="5" x2="50" y2="63" stroke="rgba(232,255,71,0.2)" stroke-width="0.7" stroke-dasharray="3,2"/>
+   <line x1="8" y1="34" x2="92" y2="34" stroke="rgba(232,255,71,0.2)" stroke-width="0.7" stroke-dasharray="3,2"/>
+   ${human(50,63,26)}<circle cx="50" cy="34" r="2" fill="rgba(232,255,71,0.8)"/>
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">Center Frame</text>`)},
+  {id:'대칭',
+   svg:svgWrap(`${frameBox(8,5,84,58)}
+   <line x1="50" y1="5" x2="50" y2="63" stroke="rgba(232,255,71,0.25)" stroke-width="0.8"/>
+   ${human(30,63,22,'#5a5a78')}${human(70,63,22)}
+   <rect x="44" y="14" width="12" height="42" rx="1.5" fill="#2a2a3a"/>
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">Symmetry</text>`)},
+  {id:'리딩룸',
+   svg:svgWrap(`${frameBox(8,5,84,58)}
+   ${human(26,63,24)}${arrow(38,34,88,34)}
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">Leading Room</text>`)},
+  {id:'프레임인프레임',
+   svg:svgWrap(`${frameBox(8,5,84,58)}
+   <rect x="18" y="12" width="64" height="44" fill="none" stroke="#9b6dff" stroke-width="1.5" rx="1"/>
+   ${human(50,62,26)}
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">Frame in Frame</text>`)},
+  {id:'삼각구도',
+   svg:svgWrap(`${frameBox(8,5,84,58)}
+   ${human(50,54,18)}${human(28,63,14,'#5a5a78')}${human(72,63,14,'#5a5a78')}
+   <line x1="50" y1="40" x2="28" y2="58" stroke="rgba(232,255,71,0.18)" stroke-width="0.8"/>
+   <line x1="50" y1="40" x2="72" y2="58" stroke="rgba(232,255,71,0.18)" stroke-width="0.8"/>
+   <line x1="28" y1="58" x2="72" y2="58" stroke="rgba(232,255,71,0.18)" stroke-width="0.8"/>
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">Triangle</text>`)},
+  {id:'대각선 구도',
+   svg:svgWrap(`${frameBox(8,5,84,58)}
+   <line x1="8" y1="63" x2="92" y2="5" stroke="rgba(232,255,71,0.2)" stroke-width="1.2"/>
+   ${human(28,63,20)}${human(72,46,20,'#5a5a78')}
+   <text x="50" y="68" text-anchor="middle" font-size="5.5" fill="#5a5a78" font-family="monospace">Diagonal</text>`)},
+];
+
+// ══════════════════════════════════════════════════════
+//  IMAGE STYLES
+// ══════════════════════════════════════════════════════
+const STYLES=[
+  {id:'drawing', label:'드로잉\nDrawing',
+   prompt:'professional film storyboard, pencil sketch illustration, black and white line drawing, hand-drawn storyboard panel, clean ink lines',
+   svg:svgWrap(`<rect x="5" y="5" width="90" height="58" rx="3" fill="#f4f0e8"/>
+   ${human(50,62,32,'#2a2a2a')}
+   <line x1="10" y1="56" x2="88" y2="56" stroke="#aaa" stroke-width="0.6"/>
+   <line x1="12" y1="18" x2="35" y2="15" stroke="#ccc" stroke-width="0.5"/>
+   <text x="50" y="68" text-anchor="middle" font-size="6" fill="#5a5a78" font-family="monospace">Drawing</text>`)},
+  {id:'realistic', label:'사실적\nRealistic',
+   prompt:'photorealistic cinematic photography, high detail film still, professional lighting, sharp focus, movie production quality',
+   svg:svgWrap(`<defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e2a3a"/><stop offset="100%" stop-color="#0a1020"/></linearGradient></defs>
+   <rect x="5" y="5" width="90" height="58" rx="3" fill="url(#rg)"/>
+   ${human(50,62,28,'#c0c8d8')}
+   <rect x="5" y="48" width="90" height="15" fill="rgba(0,0,0,0.35)"/>
+   <text x="50" y="68" text-anchor="middle" font-size="6" fill="#5a5a78" font-family="monospace">Realistic</text>`)},
+  {id:'painting', label:'페인팅\nPainting',
+   prompt:'oil painting style, expressive painterly brushstrokes, rich color palette, artistic painting, impressionist film aesthetic',
+   svg:svgWrap(`<defs><linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5a3020"/><stop offset="50%" stop-color="#a05828"/><stop offset="100%" stop-color="#203050"/></linearGradient></defs>
+   <rect x="5" y="5" width="90" height="58" rx="3" fill="url(#pg)"/>
+   ${human(50,62,28,'#e8c090')}
+   <rect x="5" y="5" width="90" height="58" rx="3" fill="none" stroke="#7a5a2a" stroke-width="1.5"/>
+   <text x="50" y="68" text-anchor="middle" font-size="6" fill="#5a5a78" font-family="monospace">Painting</text>`)},
+  {id:'popart', label:'팝아트\nPop Art',
+   prompt:'pop art style, bold flat colors, Ben-Day halftone dots, strong black outlines, Andy Warhol inspired, vibrant graphic',
+   svg:svgWrap(`<rect x="5" y="5" width="90" height="58" rx="3" fill="#FFE033"/>
+   <circle cx="18" cy="18" r="5" fill="#FF2255" opacity="0.45"/>
+   <circle cx="32" cy="12" r="3.5" fill="#FF2255" opacity="0.4"/>
+   <circle cx="78" cy="18" r="5" fill="#FF2255" opacity="0.45"/>
+   ${human(50,62,28,'#1a1a1a')}
+   <rect x="5" y="5" width="90" height="58" rx="3" fill="none" stroke="#1a1a1a" stroke-width="2.5"/>
+   <text x="50" y="68" text-anchor="middle" font-size="6" fill="#5a5a78" font-family="monospace">Pop Art</text>`)},
+  {id:'comic', label:'만화\nComic',
+   prompt:'comic book style, bold black outlines, halftone dot shading, dynamic panel composition, graphic novel illustration, expressive',
+   svg:svgWrap(`<rect x="5" y="5" width="90" height="58" rx="3" fill="#fff" stroke="#111" stroke-width="2"/>
+   <line x1="50" y1="5" x2="50" y2="63" stroke="#111" stroke-width="1.2"/>
+   <line x1="5" y1="34" x2="95" y2="34" stroke="#111" stroke-width="1.2"/>
+   ${human(28,32,16,'#111')}${human(70,62,24,'#111')}
+   <text x="50" y="68" text-anchor="middle" font-size="6" fill="#5a5a78" font-family="monospace">Comic</text>`)},
+  {id:'anime', label:'애니메이션\nAnime',
+   prompt:'Japanese anime style illustration, clean cel shading, vibrant colors, smooth outlines, Studio Ghibli inspired, anime film aesthetic',
+   svg:svgWrap(`<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#88CCEE"/><stop offset="100%" stop-color="#4a8a60"/></linearGradient></defs>
+   <rect x="5" y="5" width="90" height="58" rx="3" fill="url(#ag)"/>
+   <ellipse cx="50" cy="26" rx="13" ry="10" fill="#e8c0a0"/>
+   <ellipse cx="44" cy="23" rx="3" ry="4" fill="#1a1a4a"/>
+   <ellipse cx="56" cy="23" rx="3" ry="4" fill="#1a1a4a"/>
+   <path d="M44 30 Q50 35 56 30" stroke="#c06060" stroke-width="1.5" fill="none"/>
+   <rect x="36" y="36" width="28" height="22" rx="2" fill="#5a7ab8"/>
+   <text x="50" y="68" text-anchor="middle" font-size="6" fill="#5a5a78" font-family="monospace">Anime</text>`)},
+  {id:'noir', label:'누아르\nNoir',
+   prompt:'film noir style, dramatic high-contrast black and white, chiaroscuro shadows, 1940s detective film aesthetic, moody lighting',
+   svg:svgWrap(`<rect x="5" y="5" width="90" height="58" rx="3" fill="#080808"/>
+   <polygon points="20,5 45,63 20,63" fill="rgba(255,255,255,0.12)"/>
+   ${human(55,62,28,'#d0d0d0')}
+   <rect x="5" y="5" width="90" height="58" rx="3" fill="none" stroke="#333" stroke-width="1"/>
+   <text x="50" y="68" text-anchor="middle" font-size="6" fill="#5a5a78" font-family="monospace">Noir B&W</text>`)},
+  {id:'watercolor', label:'수채화\nWatercolor',
+   prompt:'watercolor painting style, soft color washes, gentle bleeding edges, transparent layers, delicate artistic watercolor illustration',
+   svg:svgWrap(`<rect x="5" y="5" width="90" height="58" rx="3" fill="#f8f4ef"/>
+   <ellipse cx="28" cy="22" rx="20" ry="12" fill="rgba(90,140,210,0.28)"/>
+   <ellipse cx="72" cy="28" rx="18" ry="10" fill="rgba(210,90,90,0.22)"/>
+   <ellipse cx="50" cy="48" rx="26" ry="12" fill="rgba(80,180,120,0.28)"/>
+   ${human(50,62,24,'rgba(60,40,20,0.65)')}
+   <text x="50" y="68" text-anchor="middle" font-size="6" fill="#5a5a78" font-family="monospace">Watercolor</text>`)},
+];
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let selRatio='16:9', selStyle=STYLES[0];
+let shotList=[], boards=[];
+let pickerIdx=null, pickerTmp={};
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+function init(){ buildStyleGrid(); initInterview(); }
+
+// ══════════════════════════════════════════════════════
+//  STYLE GRID
+// ══════════════════════════════════════════════════════
+function buildStyleGrid(){
+  document.getElementById('styleGrid').innerHTML=STYLES.map(s=>`
+    <div class="style-card ${s.id===selStyle.id?'active':''}" onclick="pickStyle('${s.id}')">
+      ${s.svg}
+      <div class="style-name">${s.label.replace('\n','<br>')}</div>
+    </div>`).join('');
+}
+function pickStyle(id){
+  selStyle=STYLES.find(s=>s.id===id)||STYLES[0];
+  document.getElementById('customStyle').value='';
+  buildStyleGrid();
+}
+function onCustomStyle(){
+  if(document.getElementById('customStyle').value.trim())
+    document.querySelectorAll('.style-card').forEach(c=>c.classList.remove('active'));
+}
+function getStylePrompt(){
+  const c=document.getElementById('customStyle').value.trim();
+  return c||selStyle.prompt;
+}
+function getStyleLabel(){
+  const c=document.getElementById('customStyle').value.trim();
+  return c||(selStyle.label.replace('\n',' '));
+}
+
+// ══════════════════════════════════════════════════════
+//  VISUAL PICKER
+// ══════════════════════════════════════════════════════
+function openPicker(idx){
+  pickerIdx=idx; pickerTmp={shotSize:shotList[idx].shotSize,angle:shotList[idx].angle,composition:shotList[idx].composition};
+  renderPicker();
+  document.getElementById('pickerModal').classList.add('open');
+}
+function closePicker(){ document.getElementById('pickerModal').classList.remove('open'); pickerIdx=null; }
+function modalOutside(e){ if(e.target===document.getElementById('pickerModal')) closePicker(); }
+function applyPicker(){
+  if(pickerIdx===null) return;
+  Object.assign(shotList[pickerIdx],pickerTmp);
+  renderTable(); closePicker();
+}
+function pickV(field,val,el){
+  pickerTmp[field]=val;
+  el.closest('.modal-section').querySelectorAll('.vis-item').forEach(i=>i.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function renderPicker(){
+  document.getElementById('pickerBody').innerHTML=`
+    <div class="modal-section">
+      <div class="modal-section-label">샷 사이즈 (Shot Size) — 빨간 점선이 프레임 하단 기준</div>
+      <div class="vis-grid">${SHOT_SIZES.map(s=>`
+        <div class="vis-item ${s.id===pickerTmp.shotSize?'sel':''}" onclick="pickV('shotSize','${s.id}',this)">
+          ${s.svg}<div class="vis-label">${s.id}</div>
+        </div>`).join('')}</div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-label">카메라 앵글 (Angle) — 화살표가 카메라 방향</div>
+      <div class="vis-grid">${ANGLES.map(a=>`
+        <div class="vis-item ${a.id===pickerTmp.angle?'sel':''}" onclick="pickV('angle','${a.id}',this)">
+          ${a.svg}<div class="vis-label">${a.id}</div>
+        </div>`).join('')}</div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-label">구도 (Composition) — 노란 선이 구도 가이드</div>
+      <div class="vis-grid">${COMPS.map(c=>`
+        <div class="vis-item ${c.id===pickerTmp.composition?'sel':''}" onclick="pickV('composition','${c.id}',this)">
+          ${c.svg}<div class="vis-label">${c.id}</div>
+        </div>`).join('')}</div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+//  STEP 0 — INTERVIEW
+// ══════════════════════════════════════════════════════
+const QUESTIONS=[
+  {q:'영상의 전체 시간은 얼마인가요?', hint:'예: 30초, 1분, 3분'},
+  {q:'영상의 주제 또는 핵심 메시지는 무엇인가요?', hint:'예: 브랜드 신뢰감, 일상의 소중함, 제품의 혁신성'},
+  {q:'영상의 주요 소재(장소·인물·오브젝트)는 무엇인가요?', hint:'예: 도심 카페, 20대 여성 1인, 커피잔'},
+  {q:'영상의 전체적인 분위기와 감정 흐름은 어떤가요?', hint:'예: 잔잔→긴장→여운, 밝고 경쾌하게 처음부터 끝까지'},
+  {q:'영상의 카테고리는 무엇인가요?', hint:'예: 브랜드 광고, 단편 다큐, 뮤직비디오, SNS 숏폼'},
+  {q:'자막의 스타일과 역할은 어떤가요?', hint:'예: 키워드 강조형, 내레이션 자막, 자막 없음'},
+  {q:'촬영 환경과 조건은 어떤가요?', hint:'예: 야외 자연광, 실내 스튜디오 조명, 인물 출연 없음'},
+  {q:'레퍼런스 영상이나 참고하고 싶은 스타일이 있나요?', hint:'없으면 "없음"으로 입력하세요'},
+  {q:'이 영상에서 반드시 피하고 싶은 것이 있나요?', hint:'예: 너무 어두운 톤, 빠른 컷, CG 과다 사용'},
+];
+
+let currentQ=0, answers=[];
+
+function initInterview(){
+  buildDots();
+  showQuestion(0);
+}
+
+function buildDots(){
+  const wrap=document.getElementById('progressDots');
+  wrap.innerHTML=QUESTIONS.map((_,i)=>`<div class="dot ${i===0?'active':''}" id="dot-${i}"></div>`).join('');
+}
+
+function updateDots(idx){
+  QUESTIONS.forEach((_,i)=>{
+    const d=document.getElementById(`dot-${i}`);
+    if(i<idx) d.className='dot done';
+    else if(i===idx) d.className='dot active';
+    else d.className='dot';
+  });
+}
+
+function showQuestion(idx){
+  const log=document.getElementById('chatLog');
+  // Clear if first question
+  if(idx===0) log.innerHTML='';
+
+  const qData=QUESTIONS[idx];
+  const div=document.createElement('div');
+  div.className='chat-q';
+  div.innerHTML=`
+    <div class="avatar">AI</div>
+    <div class="bubble">
+      <div class="qnum">Q${idx+1} / ${QUESTIONS.length}</div>
+      ${qData.q}
+      <div style="margin-top:0.4rem;font-size:0.75rem;color:var(--text3);font-family:'Space Mono',monospace;">${qData.hint}</div>
+    </div>`;
+  // Typing animation
+  const bubble=div.querySelector('.bubble');
+  const originalContent=bubble.innerHTML;
+  const qnum=div.querySelector('.qnum').outerHTML;
+  bubble.innerHTML=qnum+`<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>`;
+  log.appendChild(div);
+  log.scrollTop=log.scrollHeight;
+
+  setTimeout(()=>{
+    bubble.innerHTML=originalContent;
+    document.getElementById('answerInput').value='';
+    document.getElementById('answerInput').focus();
+  },600);
+
+  updateDots(idx);
+}
+
+function submitAnswer(){
+  const input=document.getElementById('answerInput');
+  const val=input.value.trim();
+  if(!val) return;
+
+  // Show user answer bubble
+  const log=document.getElementById('chatLog');
+  const div=document.createElement('div');
+  div.className='chat-a';
+  div.innerHTML=`<div class="avatar">나</div><div class="bubble">${val}</div>`;
+  log.appendChild(div);
+  log.scrollTop=log.scrollHeight;
+
+  answers[currentQ]=val;
+  input.value='';
+  currentQ++;
+
+  if(currentQ<QUESTIONS.length){
+    setTimeout(()=>showQuestion(currentQ),400);
+  } else {
+    // All done — generate scenario
+    document.getElementById('answerRow').style.display='none';
+    document.getElementById('genScenarioBar').classList.add('on');
+    generateScenarioFromAnswers();
+  }
+}
+
+async function generateScenarioFromAnswers(){
+  const apiKey=document.getElementById('apiKey').value.trim();
+
+  const prompt=`당신은 10년 경력의 영상 시나리오 작가이자 촬영·편집 실무 경험이 풍부한 감독입니다.
+아래 인터뷰 답변을 바탕으로 실제 제작 가능한 수준의 영상 시나리오를 완성해주세요.
+
+[인터뷰 답변]
+Q1. 영상의 전체 시간: ${answers[0]}
+Q2. 주제/핵심 메시지: ${answers[1]}
+Q3. 주요 소재(장소·인물·오브젝트): ${answers[2]}
+Q4. 전체 분위기와 감정 흐름: ${answers[3]}
+Q5. 카테고리: ${answers[4]}
+Q6. 자막 스타일: ${answers[5]}
+Q7. 촬영 환경: ${answers[6]}
+Q8. 레퍼런스 스타일: ${answers[7]}
+Q9. 피하고 싶은 것: ${answers[8]}
+
+[시나리오 작성 규칙]
+반드시 기승전결 구조로 작성하고, 아래 형식을 정확히 따르세요.
+
+# 시나리오 제목
+부제목 (한 줄 콘셉트)
+
+## 기본 정보
+- 전체 시간 :
+- 카테고리 :
+- 전체 분위기 :
+- 감정 흐름 곡선 :
+- 전체 배경음악 추천 : 무드 + 무료 출처 링크
+- 총 씬 수 :
+- 총 클립 수 :
+
+---
+
+## 🎬 씬 구성 (기승전결)
+
+### 🔵 기 (도입부)
+> 전체 시간의 약 20%
+
+### 씬 1 — [씬 제목]
+- 씬 시간 :
+- 씬 목적 :
+- 감정 목표 :
+- 배경음악 :
+- 효과음 :
+
+| 클립 번호 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 움직임 | 트랜지션 | 그래픽/후반 효과 |
+|-----------|------|-----------|------|------|-----------|--------------|----------|------------------|
+
+[자막 표]
+| 클립 | 자막 내용 | 자막 스타일 | 노출 시간 |
+|------|-----------|-------------|-----------|
+
+[무료 푸티지 검색]
+| 클립 | 추천 사이트 | 직접 접속 링크 | 검색어 (한국어 + English) |
+|------|-------------|----------------|--------------------------|
+
+링크 형식: https://www.pexels.com/search/videos/검색어/ 또는 https://pixabay.com/videos/search/검색어/ 또는 https://mixkit.co/free-stock-video/?q=검색어
+
+(🟡 승 / 🔴 전 / 🟢 결 동일 형식으로 반복)
+
+[제작 현실성 규칙]
+- 한 씬에서 동일 샷 사이즈 연속 사용 금지
+- 절정부(전)는 CU/ECU 비중 높이기
+- 도입부·마무리는 EWS/WS 위주
+- 글리치·UI 오버레이는 "후반 작업"으로 명시
+- 클립 최소 2초, 최대 8초
+- 감정 흐름이 씬마다 명확해야 함
+- 모든 링크는 실제 접속 가능한 형식으로`;
+
+  try {
+    let scenarioText='';
+
+    if(apiKey && apiKey.length>10){
+      // Use Gemini API
+      const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:8192,temperature:0.7}})
+      });
+      const data=await res.json();
+      scenarioText=data?.candidates?.[0]?.content?.parts?.[0]?.text||'';
+      if(!scenarioText) throw new Error('응답 없음');
+    } else {
+      // No API key — insert prompt as placeholder guide
+      scenarioText=`[API 키가 없어 자동 생성이 불가합니다]\n\n아래 내용을 Claude/GPT/Gemini에 붙여넣어 시나리오를 받은 뒤, 직접 이 창에 붙여넣기 하세요.\n\n---\n\n${prompt}`;
+    }
+
+    // Inject into Step 1 textarea
+    document.getElementById('scenario').value=scenarioText;
+
+    // Extract title if present
+    const titleMatch=scenarioText.match(/^#\s+(.+)/m);
+    if(titleMatch) document.getElementById('projectTitle').value=titleMatch[1].trim();
+
+    // Hide loading bar, show success, move to step 1
+    document.getElementById('genScenarioBar').classList.remove('on');
+
+    // Show success message in chat
+    const log=document.getElementById('chatLog');
+    const div=document.createElement('div');
+    div.className='chat-q';
+    div.innerHTML=`<div class="avatar">AI</div><div class="bubble" style="border-color:var(--green);"><strong style="color:var(--green);">✓ 시나리오 완성!</strong><br>시나리오가 생성되었습니다. 아래 버튼을 눌러 확인하고 Shot List를 만들어보세요.</div>`;
+    log.appendChild(div);
+    log.scrollTop=log.scrollHeight;
+
+    // Show next button
+    const row=document.getElementById('answerRow');
+    row.style.display='flex';
+    row.innerHTML=`<button class="btn btn-primary ml-auto" style="width:100%;justify-content:center;padding:0.875rem;" onclick="goStep(1)">시나리오 확인 → SCENARIO 편집</button>`;
+
+  } catch(e){
+    document.getElementById('genScenarioBar').classList.remove('on');
+    document.getElementById('answerRow').style.display='flex';
+    document.getElementById('answerRow').innerHTML=`
+      <div style="width:100%;font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--red);padding:0.5rem 0;">⚠ 오류: ${e.message}</div>`;
+    toast('시나리오 생성 실패: '+e.message,'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast ${type} show`;
+  setTimeout(()=>t.className='toast',2800);
+}
+function updateApiStatus(){
+  const k=document.getElementById('apiKey').value.trim();
+  const el=document.getElementById('apiStatus');
+  el.textContent=k.length>10?'입력됨 ✓':'미입력';
+  el.className=k.length>10?'api-status ok':'api-status empty';
+}
+function setRatio(btn,r){
+  document.querySelectorAll('.ratio-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); selRatio=r;
+}
+function goStep(n){
+  const panels=[0,1,2,3];
+  if(n===1&&!document.getElementById('scenario').value.trim()&&currentQ<QUESTIONS.length) return;
+  if(n===2&&!shotList.length) return;
+  if(n===3&&!boards.length) return;
+  panels.forEach(p=>{
+    const el=document.getElementById(`step-${p}`);
+    if(el) el.classList.toggle('active',p===n);
+  });
+  const navBtns=document.querySelectorAll('.step-btn');
+  navBtns.forEach((b,i)=>{
+    b.className='step-btn';
+    if(i===n) b.classList.add('active');
+    else if(i<n) b.classList.add('done');
+    else {
+      const unlocked=(i===1)||(i===2&&shotList.length)||(i===3&&boards.length);
+      b.classList.add(unlocked?'done':'locked');
+    }
+  });
+  if(n===2) document.getElementById('styleBadge').textContent=getStyleLabel();
+}
+function clearAll(){
+  document.getElementById('projectTitle').value='';
+  document.getElementById('scenario').value='';
+  shotList=[];boards=[];
+}
+
+// ══════════════════════════════════════════════════════
+//  SAMPLES
+// ══════════════════════════════════════════════════════
+const SAMPLES=[
+  {title:'호텔포포 — 반려견 호텔 광고',scenario:`# 호텔포포 30초 광고
+## 씬 구성
+### 🔵 기 (도입부)
+| 클립 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 | 트랜지션 |
+|------|------|-----------|------|------|-----------|--------|----------|
+| Clip 01 | 0:00~0:02 | 익스트림 클로즈업 | 아이레벨 | 센터프레임 | 강아지 발바닥 클로즈업. 파스텔 핑크 배경 | 스태틱 | Cut |
+| Clip 02 | 0:02~0:04 | 미디엄 | 하이앵글 | 룰오브써드 | 여행 가방 옆에 앉은 강아지 전신 | 틸트 업 | Cut |
+| Clip 03 | 0:04~0:06 | 와이드 | 아이레벨 | 대칭 | 호텔 입구 전경 파스텔 외관 | 스태틱 | Fade |
+자막: "당신의 반려견이 기다려온 여행" (Clip 02, 3초)
+### 🟡 승 (전개부)
+| 클립 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 | 트랜지션 |
+|------|------|-----------|------|------|-----------|--------|----------|
+| Clip 04 | 0:06~0:08 | 미디엄 클로즈업 | 아이레벨 | 룰오브써드 | 프런트 데스크 체크인 | 팬 | Cut |
+| Clip 05 | 0:08~0:10 | 와이드 | 하이앵글 | 대칭 | 객실 전경 강아지 전용 침대 | 크레인 다운 | Cut |
+| Clip 06 | 0:10~0:13 | 미디엄 | 아이레벨 | 프레임인프레임 | 주인과 강아지 산책 | 트래킹 | Cut |
+| Clip 07 | 0:13~0:16 | 클로즈업 | 로우앵글 | 룰오브써드 | 강아지 거품 목욕 스파 | 스태틱 | Cut |
+자막: "산책, 스파, 다이닝 — 모두 함께" (Clip 06, 3초)
+### 🔴 전 (절정부)
+| 클립 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 | 트랜지션 |
+|------|------|-----------|------|------|-----------|--------|----------|
+| Clip 08 | 0:18~0:21 | 미디엄 | 아이레벨 | 대칭 | 주인과 강아지 나란히 침대에 | 슬로우모션 | Cut |
+| Clip 09 | 0:21~0:25 | 클로즈업 | 아이레벨 | 센터프레임 | 강아지 눈 감는 순간 | 스태틱 | Fade |
+자막: "완벽한 하루의 끝" (Clip 08, 3초)
+### 🟢 결 (마무리)
+| 클립 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 | 트랜지션 |
+|------|------|-----------|------|------|-----------|--------|----------|
+| Clip 10 | 0:25~0:30 | 와이드 | 하이앵글 | 센터프레임 | 호텔 전경 로고 등장 | 스태틱 | Fade |
+자막: "HOTEL POPO — 함께여서 완벽한 여행" (Clip 10, 5초)`},
+  {title:'빛의 연금술사 — SF 드라마',scenario:`# 빛의 연금술사
+### 🔵 기
+| 클립 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 | 트랜지션 |
+|------|------|-----------|------|------|-----------|--------|----------|
+| Clip 01 | 0:00~0:08 | 익스트림 와이드 | 로우앵글 | 룰오브써드 | 지하 서버룸 전경 AUTO-DELETE 카운트다운 | 슬로우 팬 | Cut |
+| Clip 02 | 0:08~0:14 | 미디엄 클로즈업 | 아이레벨 | 룰오브써드 | 진의 얼굴 모니터 빛 절반 식은 땀 | 스태틱 | Cut |
+| Clip 03 | 0:14~0:20 | 익스트림 클로즈업 | 아이레벨 | 센터프레임 | 59:47 카운트다운 클로즈업 | 줌인 | Smash Cut |
+자막: "삭제까지 60분" (Clip 03, 4초)
+### 🟡 승
+| 클립 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 | 트랜지션 |
+|------|------|-----------|------|------|-----------|--------|----------|
+| Clip 04 | 0:36~0:44 | 미디엄 | 아이레벨 | 룰오브써드 | 쇼트 리버스 쇼트 시작 | 스태틱 | Cut |
+| Clip 05 | 0:44~0:52 | 클로즈업 | 아이레벨 | 센터프레임 | 무미나 눈 차갑지만 애절 | 스태틱 | Cut |
+| Clip 06 | 1:20~1:30 | 미디엄 클로즈업 | 더치앵글 | 룰오브써드 | 무미나 다가옴 화면 기울어짐 | 핸드헬드 | Cut |
+자막: "기억은 예술이야. 삭제할 수 없어." (Clip 05, 5초)`},
+  {title:'SNS 릴스 — 도시 라이프스타일',scenario:`# 도시의 새벽
+### 🔵 기
+| 클립 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 | 트랜지션 |
+|------|------|-----------|------|------|-----------|--------|----------|
+| Clip 01 | 0:00~0:04 | 익스트림 와이드 | 버드아이뷰 | 센터프레임 | 새벽 서울 항공샷 가로등이 별처럼 | 드론 팬 | Cut |
+| Clip 02 | 0:04~0:08 | 클로즈업 | 아이레벨 | 룰오브써드 | 알람 5:00 손이 알람을 끄는 클로즈업 | 스태틱 | Match Cut |
+자막: "새벽 5시, 도시가 숨을 고르는 시간" (Clip 01, 4초)
+### 🟡 승
+| 클립 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 | 트랜지션 |
+|------|------|-----------|------|------|-----------|--------|----------|
+| Clip 03 | 0:12~0:16 | 익스트림 클로즈업 | 아이레벨 | 센터프레임 | 스팀 올라오는 커피잔 | 스태틱 | Cut |
+| Clip 04 | 0:16~0:20 | 미디엄 와이드 | 아이레벨 | 룰오브써드 | 빈 카페 거리 혼자 걷는 모습 | 트래킹 | Cut |
+| Clip 05 | 0:20~0:25 | 와이드 | 로우앵글 | 삼각구도 | 한강 다리 안개 낀 새벽 반영 | 스태틱 | Cut |
+자막: "이 시간만큼은 오롯이 나만의 것" (Clip 04, 4초)
+### 🔴 전
+| 클립 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 | 트랜지션 |
+|------|------|-----------|------|------|-----------|--------|----------|
+| Clip 06 | 0:36~0:42 | 와이드 | 로우앵글 | 룰오브써드 | 일출 도시 실루엣 | 타임랩스 | Cut |
+| Clip 07 | 0:42~0:50 | 미디엄 클로즈업 | 아이레벨 | 센터프레임 | 빛 맞으며 멈추는 인물 슬로우모션 | 슬로우모션 | Fade |
+자막: "하루 중 가장 아름다운 순간" (Clip 06, 5초)`}
+];
+function loadSample(i){ const s=SAMPLES[i]; document.getElementById('projectTitle').value=s.title; document.getElementById('scenario').value=s.scenario; }
+
+// ══════════════════════════════════════════════════════
+//  PARSE SCENARIO
+// ══════════════════════════════════════════════════════
+function generateShotList(){
+  const sc=document.getElementById('scenario').value.trim();
+  if(!sc){ toast('시나리오를 먼저 입력하세요','error'); return; }
+  shotList=parse(sc);
+  if(!shotList.length){ toast('클립 정보를 찾지 못했습니다. 샘플 형식을 참고해주세요.','error'); return; }
+  renderTable();
+  goStep(2);
+  document.getElementById('sl-title').textContent=document.getElementById('projectTitle').value||'Shot List';
+  document.getElementById('sl-meta').textContent=`총 ${shotList.length}개 클립`;
+}
+function parse(text){
+  const shots=[],lines=text.split('\n');
+  let scene=0;
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i].trim();
+    if(/씬\s*\d+|Scene\s*\d+|###.*(기|승|전|결)/i.test(l)) scene++;
+    if(!/^\|\s*(Clip\s*\d+|\d+)\s*\|/i.test(l)) continue;
+    const c=l.split('|').map(s=>s.trim()).filter(Boolean);
+    if(c.length<4) continue;
+    const g=(n,fb='')=>c[n]||fb;
+    shots.push({id:shots.length+1,scene:scene||1,clip:g(0,`Clip ${shots.length+1}`),
+      time:g(1,'-'),shotSize:g(2,'미디엄'),angle:g(3,'아이레벨'),
+      composition:g(4,'룰오브써드'),description:g(5,'내용'),
+      camera:g(6,'스태틱'),transition:g(7,'Cut'),
+      lens:lensOf(g(2,'')),ratio:selRatio,note:subOf(lines,i)});
+  }
+  return shots;
+}
+function lensOf(s){
+  s=s.toLowerCase();
+  if(s.includes('익스트림 와이드')||s.includes('extreme wide')) return '14-24mm';
+  if(s.includes('와이드')||s.includes('wide')) return '24-35mm';
+  if(s.includes('미디엄 와이드')) return '35mm';
+  if(s.includes('미디엄 클로즈')||s.includes('medium close')) return '85mm';
+  if(s.includes('클로즈')||s.includes('close')) return '85-135mm';
+  if(s.includes('익스트림 클로즈')||s.includes('extreme close')) return '100mm macro';
+  return '50mm';
+}
+function subOf(lines,from){
+  for(let j=from;j<Math.min(from+8,lines.length);j++){
+    const l=lines[j];
+    if(l.includes('자막:')||l.includes('캡션:'))
+      return l.replace(/자막:|캡션:/,'').trim().replace(/"/g,'');
+  }
+  return '';
+}
+
+// ══════════════════════════════════════════════════════
+//  SHOT LIST TABLE
+// ══════════════════════════════════════════════════════
+const CAM=['스태틱','팬','틸트 업','틸트 다운','줌인','줌아웃','트래킹','핸드헬드','크레인 업','크레인 다운','드론 팬','슬로우모션','타임랩스'];
+const TR=['Cut','Fade','L컷','J컷','Match Cut','Smash Cut','Cross Dissolve'];
+function sel(opts,val,cb){return `<select onchange="${cb}">${opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}</select>`;}
+
+function getShotSvg(shotId){
+  const s=SHOT_SIZES.find(x=>x.id===shotId)||SHOT_SIZES[3];
+  return s.svg;
+}
+
+function renderTable(){
+  document.getElementById('shotBody').innerHTML=shotList.map((s,i)=>`
+    <tr>
+      <td class="scene-cell">S${s.scene}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--text3)">${s.clip}</td>
+      <td style="min-width:140px;max-width:190px"><div class="trunc2" style="font-size:0.78rem;color:var(--text)">${s.description}</div></td>
+      <td><span class="tag tag-purple">${s.time}</span></td>
+      <td>
+        <button class="pick-btn" onclick="openPicker(${i})" title="클릭 → 시각 선택기">
+          <svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg" style="width:38px;height:26px">${getShotSvg(s.shotSize).replace(/<svg[^>]*>/,'').replace('</svg>','')}</svg>
+          <span>${s.shotSize}</span>
+        </button>
+      </td>
+      <td><button class="pick-btn" onclick="openPicker(${i})"><span>${s.angle}</span></button></td>
+      <td><button class="pick-btn" onclick="openPicker(${i})"><span>${s.composition}</span></button></td>
+      <td>${sel(CAM,s.camera,`upd(${i},'camera',this.value)`)}</td>
+      <td><span class="tag tag-yellow">${s.lens}</span></td>
+      <td>${sel(TR,s.transition,`upd(${i},'transition',this.value)`)}</td>
+      <td style="max-width:130px;font-size:0.72rem;color:var(--text3)">${s.note||'-'}</td>
+      <td><button class="btn btn-danger" style="padding:0.22rem 0.45rem;font-size:0.62rem" onclick="delShot(${i})">삭제</button></td>
+    </tr>`).join('');
+}
+function upd(i,f,v){ shotList[i][f]=v; }
+function delShot(i){ shotList.splice(i,1); renderTable(); document.getElementById('sl-meta').textContent=`총 ${shotList.length}개 클립`; }
+function addShot(){
+  const last=shotList.length?shotList[shotList.length-1].scene:1;
+  shotList.push({id:Date.now(),scene:last,clip:`Clip ${shotList.length+1}`,time:'-',shotSize:'미디엄',angle:'아이레벨',composition:'룰오브써드',description:'새 클립',camera:'스태틱',transition:'Cut',lens:'50mm',ratio:selRatio,note:''});
+  renderTable();
+}
+
+// ══════════════════════════════════════════════════════
+//  STORYBOARD
+// ══════════════════════════════════════════════════════
+async function generateStoryboard(){
+  const k=document.getElementById('apiKey').value.trim();
+  if(!k){ toast('API 키를 입력하세요','error'); return; }
+  if(!shotList.length){ toast('Shot List가 없습니다','error'); return; }
+  boards=shotList.map(s=>({...s,img:null,status:'pending'}));
+  renderGrid();
+  goStep(3);
+  document.getElementById('sb-title').textContent=document.getElementById('projectTitle').value||'Storyboard';
+  document.getElementById('sb-meta').textContent=`총 ${boards.length}개 · ${getStyleLabel()} 스타일`;
+  await runAll();
+}
+async function regenAll(){
+  const k=document.getElementById('apiKey').value.trim();
+  if(!k){ toast('API 키를 입력하세요','error'); return; }
+  boards.forEach(b=>{b.img=null;b.status='pending';});
+  renderGrid(); await runAll();
+}
+async function runAll(){
+  const k=document.getElementById('apiKey').value.trim();
+  const bar=document.getElementById('genBar'),fill=document.getElementById('genFill'),
+        txt=document.getElementById('genText'),cnt=document.getElementById('genCount');
+  bar.classList.add('on');
+  let done=0,total=boards.length;
+  for(let i=0;i<boards.length;i++){
+    boards[i].status='generating'; updateCard(i);
+    txt.textContent=`[${i+1}/${total}] ${boards[i].description.slice(0,28)}...`;
+    cnt.textContent=`${done}/${total}`;
+    fill.style.width=`${done/total*100}%`;
+    try{
+      boards[i].img=await callAPI(k,buildPrompt(boards[i]));
+      boards[i].status='done';
+    }catch(e){
+      boards[i].status='error'; boards[i].err=e.message;
+    }
+    done++; updateCard(i);
+    fill.style.width=`${done/total*100}%`;
+    cnt.textContent=`${done}/${total}`;
+    if(i<boards.length-1) await sleep(6000);
+  }
+  txt.textContent='✓ 완료!'; fill.style.width='100%';
+  setTimeout(()=>bar.classList.remove('on'),3000);
+  toast(`${done}개 완료`,'success');
+}
+
+function buildPrompt(b){
+  const ratioMap={'16:9':'widescreen 16:9','9:16':'vertical 9:16','1:1':'square','4:3':'4:3','2.39:1':'ultra-wide anamorphic 2.39:1'};
+  const shotMap={'익스트림 와이드':'extreme wide shot','와이드':'wide shot','미디엄 와이드':'medium wide shot','미디엄':'medium shot','미디엄 클로즈업':'medium close-up shot','클로즈업':'close-up shot','익스트림 클로즈업':'extreme close-up'};
+  return `Create a professional film storyboard panel.
+STYLE: ${getStylePrompt()} — maintain this exact style consistently.
+FRAME: ${ratioMap[b.ratio]||'widescreen 16:9'} aspect ratio.
+SCENE: ${b.description}
+SHOT SIZE: ${shotMap[b.shotSize]||b.shotSize}
+CAMERA ANGLE: ${b.angle}
+COMPOSITION: ${b.composition}
+CAMERA MOVEMENT: ${b.camera}
+LENS: ${b.lens}
+RULES: Single storyboard frame only. No text, labels, or captions inside the image. Show clear subject, depth, and lighting direction. Professional director's storyboard quality.`;
+}
+
+async function callAPI(k,prompt){
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${k}`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseModalities:['IMAGE','TEXT']}})
+  });
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${r.status}`);}
+  const d=await r.json();
+  for(const p of(d?.candidates?.[0]?.content?.parts||[]))
+    if(p.inlineData?.mimeType?.startsWith('image/'))
+      return `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+  throw new Error('이미지 데이터 없음');
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ══════════════════════════════════════════════════════
+//  STORYBOARD GRID
+// ══════════════════════════════════════════════════════
+function cardImgHtml(b,i){
+  const ar=b.ratio.replace(':','/');
+  if(b.status==='generating') return `<div class="sb-generating" style="aspect-ratio:${ar}"><div class="spinner"></div><div style="font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--text3)">GENERATING...</div></div>`;
+  if(b.status==='done'&&b.img) return `<img class="sb-img" src="${b.img}" style="aspect-ratio:${ar}" alt="">`;
+  if(b.status==='error') return `<div class="sb-placeholder" style="aspect-ratio:${ar}"><span style="font-size:1.4rem">⚠</span><span>${b.err||'실패'}</span></div>`;
+  return `<div class="sb-placeholder" style="aspect-ratio:${ar}"><span style="font-size:1.4rem">🎬</span><span>S${b.scene}·${b.clip}</span></div>`;
+}
+function renderGrid(){
+  document.getElementById('sbGrid').innerHTML=boards.map((b,i)=>`
+    <div class="sb-card" id="sbc-${i}">
+      <div class="sb-img-wrap">
+        ${cardImgHtml(b,i)}
+        <div class="sb-badge">S${b.scene}·${b.clip}</div>
+        ${b.status==='done'?`<button class="sb-regen" onclick="regenOne(${i})">↻ 재생성</button>`:''}
+      </div>
+      <div class="sb-info">
+        <div class="sb-title-row">
+          <div class="sb-title">${b.description.slice(0,55)}${b.description.length>55?'…':''}</div>
+          <div class="sb-dur">${b.time}</div>
+        </div>
+        <div class="sb-tags">
+          <span class="tag tag-purple">${b.shotSize}</span>
+          <span class="tag tag-blue">${b.angle}</span>
+          <span class="tag tag-orange">${b.composition}</span>
+          <span class="tag tag-green">${b.camera}</span>
+          <span class="tag tag-yellow">${b.lens}</span>
+        </div>
+        ${b.transition?`<div class="sb-note">트랜지션: ${b.transition}${b.note?' · 자막: '+b.note:''}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+function updateCard(i){
+  const card=document.getElementById(`sbc-${i}`);
+  if(!card) return;
+  const wrap=card.querySelector('.sb-img-wrap');
+  const old=wrap.querySelector('img,.sb-placeholder,.sb-generating');
+  if(old){const tmp=document.createElement('div');tmp.innerHTML=cardImgHtml(boards[i],i);old.replaceWith(tmp.firstElementChild);}
+  if(boards[i].status==='done'&&!wrap.querySelector('.sb-regen')){
+    const btn=document.createElement('button');
+    btn.className='sb-regen';btn.textContent='↻ 재생성';btn.onclick=()=>regenOne(i);
+    wrap.appendChild(btn);
+  }
+}
+async function regenOne(i){
+  const k=document.getElementById('apiKey').value.trim();
+  if(!k){toast('API 키를 입력하세요','error');return;}
+  boards[i].status='generating';boards[i].img=null;updateCard(i);
+  try{boards[i].img=await callAPI(k,buildPrompt(boards[i]));boards[i].status='done';}
+  catch(e){boards[i].status='error';boards[i].err=e.message;toast('실패: '+e.message,'error');}
+  updateCard(i);
+}
+
+init();
+</script>
+</body>
+</html>
