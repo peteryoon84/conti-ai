@@ -127,6 +127,13 @@ td select{background:var(--surface3);border:1px solid var(--border2);border-radi
 .sb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.25rem;}
 .sb-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all 0.2s;}
 .sb-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+/* 스토리보드 카드 인라인 편집 컨트롤 */
+.sb-controls{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.6rem;align-items:center;}
+.sb-ctrl-group{display:flex;align-items:center;gap:0.25rem;}
+.sb-ctrl-label{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--text3);white-space:nowrap;}
+.sb-select{background:var(--surface2);border:1px solid var(--border2);border-radius:5px;color:var(--text2);font-family:'Space Mono',monospace;font-size:0.62rem;padding:0.22rem 0.4rem;cursor:pointer;outline:none;transition:border-color 0.15s;}
+.sb-select:hover,.sb-select:focus{border-color:var(--accent2);color:var(--text);}
+.sb-apply-btn{padding:0.25rem 0.65rem!important;font-size:0.65rem!important;margin-left:0.25rem;}
 .sb-img-wrap{position:relative;background:var(--surface2);}
 .sb-img{width:100%;display:block;object-fit:cover;}
 .sb-placeholder,.sb-generating{width:100%;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;background:var(--surface2);color:var(--text3);font-family:'Space Mono',monospace;font-size:0.72rem;flex-direction:column;gap:0.5rem;}
@@ -138,6 +145,17 @@ td select{background:var(--surface3);border:1px solid var(--border2);border-radi
 .sb-info{padding:0.875rem 1rem;}
 .sb-title-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.45rem;}
 .sb-title{font-size:0.82rem;font-weight:700;color:var(--text);line-height:1.4;}
+/* 내용 설명 인라인 편집 */
+.desc-view{cursor:pointer;border-radius:4px;padding:0.18rem 0.35rem;margin:-0.18rem -0.35rem;transition:background 0.15s;}
+.desc-view:hover{background:rgba(232,255,71,0.07);outline:1px dashed rgba(232,255,71,0.3);}
+.desc-view::after{content:' ✎';font-size:0.6em;opacity:0;transition:opacity 0.15s;color:var(--accent2);}
+.desc-view:hover::after{opacity:1;}
+.desc-edit-wrap{display:flex;flex-direction:column;gap:0.4rem;width:100%;}
+.desc-textarea{background:var(--surface2);border:1px solid var(--accent2);border-radius:6px;color:var(--text);font-size:0.78rem;line-height:1.5;padding:0.45rem 0.6rem;resize:vertical;width:100%;min-height:60px;font-family:inherit;outline:none;}
+.desc-textarea:focus{border-color:var(--accent);}
+.desc-save-row{display:flex;gap:0.4rem;}
+.desc-save-btn{padding:0.22rem 0.65rem;font-size:0.68rem;background:var(--accent);color:#0a0a0f;border:none;border-radius:5px;cursor:pointer;font-weight:700;}
+.desc-cancel-btn{padding:0.22rem 0.55rem;font-size:0.68rem;background:var(--surface2);color:var(--text3);border:1px solid var(--border2);border-radius:5px;cursor:pointer;}
 .sb-dur{font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--text3);white-space:nowrap;margin-left:0.5rem;}
 .sb-tags{display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.65rem;}
 .sb-note{font-size:0.73rem;color:var(--text3);border-top:1px solid var(--border);padding-top:0.55rem;line-height:1.5;}
@@ -184,12 +202,30 @@ td select{background:var(--surface3);border:1px solid var(--border2);border-radi
 .typing-dot:nth-child(2){animation-delay:0.2s;}
 .typing-dot:nth-child(3){animation-delay:0.4s;}
 @keyframes blink{0%,80%,100%{opacity:0.2}40%{opacity:1}}
+/* 답변 수정 */
+.chat-a .bubble{ cursor:pointer; transition:border-color 0.15s; }
+.chat-a .bubble:hover{ border-color:var(--accent); }
+.chat-a .bubble:hover::after{ content:'✏ 클릭하여 수정'; display:block; font-size:0.65rem; color:var(--accent); font-family:'Space Mono',monospace; margin-top:0.4rem; opacity:0.8; }
+.bubble-editing{ border-color:var(--accent) !important; background:var(--surface3) !important; }
+.edit-row{ display:flex; gap:0.5rem; margin-top:0.5rem; }
+.edit-input{ flex:1; background:var(--surface2); border:1px solid var(--accent); border-radius:6px; padding:0.4rem 0.75rem; color:var(--text); font-family:'Noto Sans KR',sans-serif; font-size:0.85rem; outline:none; }
+.scenario-apply-bar{ background:var(--surface); border:1px solid var(--green); border-radius:8px; padding:0.875rem 1.25rem; margin-top:0.75rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+.scenario-apply-bar span{ font-family:'Space Mono',monospace; font-size:0.72rem; color:var(--green); flex:1; }
+/* 시나리오 미리보기 */
+.scenario-preview{ background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--green); border-radius:10px; padding:1.25rem 1.5rem; margin-top:1rem; display:none; }
+.scenario-preview.on{ display:block; }
+.scenario-preview-label{ font-family:'Space Mono',monospace; font-size:0.62rem; letter-spacing:0.1em; color:var(--green); text-transform:uppercase; margin-bottom:0.75rem; display:flex; justify-content:space-between; align-items:center; }
+.scenario-preview-body{ font-size:0.82rem; color:var(--text2); line-height:1.75; white-space:pre-wrap; max-height:360px; overflow-y:auto; }
 ::-webkit-scrollbar{width:6px;height:6px;}
 ::-webkit-scrollbar-track{background:var(--surface);}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 .step-panel{display:none;}
 .step-panel.active{display:block;}
 .style-badge{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(232,255,71,0.08);border:1px solid rgba(232,255,71,0.25);border-radius:6px;padding:0.25rem 0.65rem;font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--accent);}
+/* Shot list 인라인 스타일 선택 */
+.sl-style-btn{display:flex;align-items:center;gap:0.35rem;padding:0.3rem 0.75rem;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text3);font-family:'Space Mono',monospace;font-size:0.68rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.sl-style-btn:hover{border-color:var(--accent2);color:var(--text);}
+.sl-style-btn.active{border-color:var(--accent);background:rgba(232,255,71,0.10);color:var(--accent);}
 .trunc2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 </style>
 </head>
@@ -227,11 +263,24 @@ td select{background:var(--surface3);border:1px solid var(--border2);border-radi
     <span style="color:var(--accent2);">※ 상단에 Gemini API 키를 먼저 입력하세요.</span></div>
 
     <div class="progress-dots" id="progressDots"></div>
-    <div class="chat-log" id="chatLog"></div>
+    <div class="chat-log" id="chatLog" style="max-height:520px;overflow-y:auto;"></div>
 
     <div class="answer-row" id="answerRow">
-      <input type="text" id="answerInput" placeholder="답변을 입력하고 Enter 또는 → 버튼을 누르세요" onkeydown="if(event.key==='Enter')submitAnswer()" disabled>
-      <button class="btn btn-primary" onclick="submitAnswer()">→</button>
+      <input type="text" id="answerInput" placeholder="답변 입력 후 Enter 또는 → (시나리오 완성 후에도 수정 요청 가능)" onkeydown="if(event.key==='Enter')submitAnswer()" disabled>
+      <button class="btn btn-primary" onclick="submitAnswer()" id="sendBtn">→</button>
+    </div>
+    <div id="scenarioBtns" style="display:none;margin-top:0.75rem;display:none;gap:0.75rem;">
+      <button class="btn btn-success" onclick="applyScenarioFromChat()">✓ 최신 시나리오 SCENARIO 탭에 적용</button>
+      <button class="btn" onclick="goStep(1)">SCENARIO 탭으로 이동 →</button>
+    </div>
+
+    <!-- 시나리오 미리보기 -->
+    <div class="scenario-preview" id="scenarioPreview">
+      <div class="scenario-preview-label">
+        <span>✦ 생성된 시나리오 미리보기</span>
+        <button class="btn" style="padding:0.2rem 0.6rem;font-size:0.65rem;" onclick="togglePreview()">접기 ▲</button>
+      </div>
+      <div class="scenario-preview-body" id="scenarioPreviewBody"></div>
     </div>
   </div>
 </div>
@@ -255,15 +304,6 @@ td select{background:var(--surface3);border:1px solid var(--border2);border-radi
     </div>
   </div>
 
-  <!-- ★ IMAGE STYLE -->
-  <div class="card">
-    <div class="card-label">IMAGE STYLE — 콘티 이미지 전체 스타일 선택 (일관성 유지)</div>
-    <div class="style-grid" id="styleGrid"></div>
-    <div class="custom-style-row">
-      <label>CUSTOM →</label>
-      <input type="text" class="input-text" id="customStyle" placeholder="직접 입력 (예: ukiyo-e woodblock print, 1980s cel animation...)" style="padding:0.4rem 0.75rem;font-size:0.8rem;" oninput="onCustomStyle()">
-    </div>
-  </div>
 
   <div class="card">
     <div class="card-label">SCENARIO</div>
@@ -298,10 +338,19 @@ td select{background:var(--surface3);border:1px solid var(--border2);border-radi
       <button class="btn-success btn" onclick="generateStoryboard()">🎬 콘티 생성 →</button>
     </div>
   </div>
-  <div style="margin-bottom:0.875rem;display:flex;align-items:center;gap:0.75rem;">
-    <span style="font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--text3);">선택 스타일:</span>
-    <span class="style-badge" id="styleBadge">—</span>
-    <span style="font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--text3);margin-left:0.5rem;">샷/앵글/구도 셀 클릭 → 시각적 선택기</span>
+
+  <!-- 스타일 선택 (Shot List 탭) -->
+  <div class="card" style="margin-bottom:1rem;padding:1.25rem 1.5rem;">
+    <div class="card-label">IMAGE STYLE — 콘티 이미지 전체 스타일 (일관성 유지)</div>
+    <div class="style-grid" id="styleGrid"></div>
+    <div class="custom-style-row">
+      <label>CUSTOM →</label>
+      <input type="text" class="input-text" id="customStyle" placeholder="직접 입력 (예: ukiyo-e woodblock print, 1980s cel animation...)" style="padding:0.4rem 0.75rem;font-size:0.8rem;" oninput="onCustomStyle()">
+    </div>
+  </div>
+
+  <div style="margin-bottom:0.75rem;font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--text3);">
+    샷/앵글/구도 셀 클릭 → 시각적 선택기 &nbsp;|&nbsp; 스토리보드 카드에서도 각 항목 개별 수정 후 재생성 가능
   </div>
   <div class="table-wrap">
     <table>
@@ -330,7 +379,8 @@ td select{background:var(--surface3);border:1px solid var(--border2);border-radi
     </div>
     <div class="action-row">
       <button class="btn" onclick="goStep(2)">← Shot List</button>
-      <button class="btn" onclick="window.print()">🖨 PDF 저장</button>
+      <button class="btn" onclick="openPrintView()">🖨 PDF 저장</button>
+      <button class="btn" onclick="downloadAllImages()" id="dlImgBtn">⬇ 이미지 저장</button>
       <button class="btn-primary btn" onclick="regenAll()">🔄 전체 재생성</button>
     </div>
   </div>
@@ -573,13 +623,11 @@ let pickerIdx=null, pickerTmp={};
 //  INIT
 // ══════════════════════════════════════════════════════
 function init(){
-  buildStyleGrid();
-  // API 키가 있으면 인터뷰 바로 시작, 없으면 키 입력 안내
+  // styleGrid는 SHOT LIST 탭(step-2)에 있으므로 goStep(2) 시 빌드됨
   const apiKey = document.getElementById('apiKey').value.trim();
   if(apiKey && apiKey.length > 10){
     initInterview();
   } else {
-    // 키 입력 안내 메시지 표시
     const log = document.getElementById('chatLog');
     log.innerHTML = `<div class="chat-q"><div class="avatar">AI</div><div class="bubble" style="border-color:var(--accent2);">
       <strong style="color:var(--accent);">👋 안녕하세요!</strong><br><br>
@@ -619,6 +667,7 @@ function pickStyle(id){
   document.getElementById('customStyle').value='';
   buildStyleGrid();
 }
+function pickSlStyle(id){ pickStyle(id); }
 function onCustomStyle(){
   if(document.getElementById('customStyle').value.trim())
     document.querySelectorAll('.style-card').forEach(c=>c.classList.remove('active'));
@@ -681,105 +730,200 @@ function renderPicker(){
 //  STEP 0 — GEMINI 채팅 인터뷰
 // ══════════════════════════════════════════════════════
 
-const SYSTEM_PROMPT = `당신은 10년 경력의 영상 시나리오 작가이자 촬영·편집 실무 경험이 풍부한 감독입니다.
-지금부터 사용자와 인터뷰를 진행하며 실제 제작 가능한 수준의 영상 시나리오를 완성해주세요.
+const SYSTEM_PROMPT = `당신은 10년 경력의 영상 감독이자 시나리오 작가입니다.
+지금부터 사용자와 인터뷰를 진행하며 실제 제작 가능한 수준의 영상 시나리오를 완성합니다.
 
 [인터뷰 규칙]
-- 질문은 반드시 하나씩만 합니다.
-- 여러 질문을 한꺼번에 하지 마세요.
-- 사용자가 답변하면 짧게 공감한 뒤 다음 질문으로 넘어갑니다.
-- 반드시 아래 9개 질문을 순서대로 진행합니다.
+- 질문은 반드시 하나씩만 합니다. 여러 질문을 동시에 하지 마세요.
+- 사용자가 답변하면 한 줄 공감 후 다음 질문으로 넘어갑니다.
+- 9개 질문을 순서대로 진행합니다.
+- 이전 답변 수정 요청 시 반영 후 대화를 이어갑니다.
+- 시나리오 완성 후에도 수정 요청을 받으면 수정된 시나리오를 ===SCENARIO_START=== 형식으로 다시 출력합니다.
 
 [질문 순서]
 Q1. 영상의 전체 시간은 얼마인가요?
 Q2. 영상의 주제 또는 핵심 메시지는 무엇인가요?
 Q3. 영상의 주요 소재(장소·인물·오브젝트)는 무엇인가요?
-Q4. 영상의 전체적인 분위기와 감정 흐름은 어떤가요?
-Q5. 영상의 카테고리는 무엇인가요?
-Q6. 자막의 스타일과 역할은 어떤가요?
+Q4. 전체적인 분위기와 감정 흐름은 어떤가요?
+Q5. 영상 카테고리는 무엇인가요? (광고, 뮤직비디오, 단편, 숏폼 등)
+Q6. 자막 스타일과 역할은 어떤가요?
 Q7. 촬영 환경과 조건은 어떤가요?
-Q8. 레퍼런스 영상이나 참고하고 싶은 스타일이 있나요?
-Q9. 이 영상에서 반드시 피하고 싶은 것이 있나요?
+Q8. 레퍼런스나 참고하고 싶은 스타일이 있나요?
+Q9. 반드시 피하고 싶은 것이 있나요?
 
-9개 질문이 모두 끝나면 반드시 아래 형식으로 시나리오를 작성합니다.
+9개 질문이 모두 끝나거나 사용자가 시나리오 작성을 요청하면 아래 형식으로 시나리오를 작성합니다.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[씬 구조 원칙 — 반드시 준수]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+씬(Scene)은 장소·시간·상황이 바뀔 때 새로 시작합니다.
+시퀀스(Sequence)는 여러 씬을 묶는 상위 단위입니다 (기·승·전·결).
+즉, 기승전결은 씬이 아니라 시퀀스입니다.
+각 시퀀스 안에는 2~4개의 씬이 포함되어야 합니다.
+각 씬 안에는 2~5개의 클립이 포함됩니다.
+씬 번호는 전체 통틀어 연속 번호를 사용합니다 (씬 1, 씬 2, 씬 3 ...).
+
+[클립 테이블 형식 — 반드시 이 열 순서 고정]
+클립 번호 형식: S(씬번호)-C(클립번호) 예) S1-C1, S1-C2, S2-C1
+
+| 클립 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 | 트랜지션 |
+|------|------|-----------|------|------|-----------|--------|----------|
+
+내용 설명은 반드시 구체적으로 작성합니다 (최소 15자 이상).
+"내용", "설명" 같은 placeholder 절대 사용 금지.
+
+[자막은 클립 테이블 아래 한 줄로 표기]
+자막: "자막 내용" (S1-C1, 노출 시간)
+
+[무료 푸티지는 자막 아래 한 줄로 표기]
+푸티지: S1-C1 | Pexels | https://www.pexels.com/search/videos/검색어/ | 검색어KR, 검색어EN
 
 ===SCENARIO_START===
-# 시나리오 제목
-부제목 (한 줄 콘셉트)
+# [제목]
+[부제목 — 한 줄 콘셉트]
 
 ## 기본 정보
 - 전체 시간 :
 - 카테고리 :
-- 전체 분위기 :
-- 감정 흐름 곡선 :
-- 전체 배경음악 추천 : 무드 + 무료 출처 링크
+- 분위기 :
+- 감정 흐름 :
+- 배경음악 추천 :
+- 총 시퀀스 수 : 4 (기·승·전·결)
 - 총 씬 수 :
 - 총 클립 수 :
 
 ---
 
-## 🎬 씬 구성 (기승전결)
+## 🎬 시퀀스 구성
 
-### 🔵 기 (도입부)
-> 전체 시간의 약 20%
+### 🔵 시퀀스 1 — 기 (도입) · 전체 시간의 약 20%
 
-### 씬 1 — [씬 제목]
-- 씬 시간 :
+#### 씬 1 — [장소/상황 기반 제목]
+- 장소 :
+- 시간 :
 - 씬 목적 :
-- 감정 목표 :
 - 배경음악 :
-- 효과음 :
 
-| 클립 번호 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 움직임 | 트랜지션 | 그래픽/후반 효과 |
-|-----------|------|-----------|------|------|-----------|--------------|----------|------------------|
+| 클립 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 | 트랜지션 |
+|------|------|-----------|------|------|-----------|--------|----------|
+| S1-C1 | Xs | [샷사이즈] | [앵글] | [구도] | [구체적인 화면 묘사 — 최소 15자] | [움직임] | [전환] |
+| S1-C2 | Xs | ... | ... | ... | ... | ... | ... |
 
-### 자막 표
-| 클립 | 자막 내용 | 자막 스타일 | 노출 시간 |
-|------|-----------|-------------|-----------|
+자막: "자막 내용" (S1-C1, Xs)
+푸티지: S1-C1 | Pexels | https://www.pexels.com/search/videos/검색어/ | 검색어KR, searchEN
 
-### 무료 푸티지 검색
-| 클립 | 추천 사이트 | 직접 접속 링크 | 검색어 (한국어 + English) |
-|------|-------------|----------------|--------------------------|
+#### 씬 2 — [다른 장소/상황]
+(동일 형식 반복)
 
-(🟡 승 / 🔴 전 / 🟢 결 동일 형식으로 반복)
+### 🟡 시퀀스 2 — 승 (전개) · 전체 시간의 약 30%
+#### 씬 3 — ...
+#### 씬 4 — ...
+
+### 🔴 시퀀스 3 — 전 (절정) · 전체 시간의 약 30%
+#### 씬 5 — ...
+#### 씬 6 — ...
+
+### 🟢 시퀀스 4 — 결 (마무리) · 전체 시간의 약 20%
+#### 씬 7 — ...
 ===SCENARIO_END===
 
 [제작 현실성 규칙]
-- 한 씬에서 동일 샷 사이즈 연속 사용 금지
-- 절정부(전)는 CU/ECU 비중 높이기
-- 도입부·마무리는 EWS/WS 위주
-- 글리치·UI 오버레이는 "후반 작업"으로 명시
+- 한 씬 안에서 동일 샷 사이즈 연속 금지
+- 절정(전)은 CU/ECU 비중 높이기
+- 도입·마무리는 EWS/WS 위주
 - 클립 최소 2초, 최대 8초
-- 푸티지 링크 형식: https://www.pexels.com/search/videos/검색어/`;
+- 내용 설명은 반드시 구체적으로 (인물 행동, 빛, 색감, 움직임 포함)
+- 푸티지 링크 형식: https://www.pexels.com/search/videos/영어검색어/`;
 
-// 대화 히스토리 (Gemini multi-turn용)
 let chatHistory = [];
 let interviewDone = false;
 let questionCount = 0;
+let latestScenario = '';
 
 function initInterview(){
   chatHistory = [];
   interviewDone = false;
   questionCount = 0;
+  latestScenario = '';
   document.getElementById('chatLog').innerHTML = '';
-  document.getElementById('answerInput').value = '';
-  document.getElementById('answerInput').disabled = false;
   document.getElementById('progressDots').innerHTML = '';
-  // 첫 질문 요청
-  sendToGemini('안녕하세요. 인터뷰를 시작해주세요. Q1부터 시작하세요.');
+  const row = document.getElementById('answerRow');
+  row.style.display = 'flex';
+  row.innerHTML = `
+    <input type="text" id="answerInput" placeholder="답변 입력 후 Enter 또는 → (완성 후에도 수정·질문 가능)" onkeydown="if(event.key==='Enter')submitAnswer()" disabled>
+    <button class="btn btn-primary" onclick="submitAnswer()" id="sendBtn">→</button>`;
+  document.getElementById('scenarioBtns').style.display = 'none';
+  sendToGemini('안녕하세요. 인터뷰를 시작해주세요. Q1부터 시작하세요.', true);
 }
 
-function appendBubble(role, text, extraStyle=''){
+// ── 버블 추가 ──────────────────────────────────
+function appendBubble(role, text, extraStyle='', editable=false){
   const log = document.getElementById('chatLog');
   const div = document.createElement('div');
   div.className = role === 'ai' ? 'chat-q' : 'chat-a';
-  const avatarLabel = role === 'ai' ? 'AI' : '나';
-  div.innerHTML = `<div class="avatar">${avatarLabel}</div><div class="bubble" style="${extraStyle}">${text}</div>`;
+
+  const bubbleId = 'bubble_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+
+  if(role === 'user' && editable){
+    div.innerHTML = `
+      <div class="avatar">나</div>
+      <div class="bubble" id="${bubbleId}" style="${extraStyle}" onclick="startEdit('${bubbleId}','${escapeForAttr(text)}')">${text}</div>`;
+  } else {
+    div.innerHTML = `
+      <div class="avatar">${role==='ai'?'AI':'나'}</div>
+      <div class="bubble" style="${extraStyle}">${text}</div>`;
+  }
   log.appendChild(div);
   log.scrollTop = log.scrollHeight;
   return div;
 }
 
+function escapeForAttr(str){
+  return str.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+}
+
+// ── 답변 버블 인라인 수정 ──────────────────────
+function startEdit(bubbleId, originalText){
+  const bubble = document.getElementById(bubbleId);
+  if(!bubble || bubble.querySelector('.edit-input')) return;
+  bubble.classList.add('bubble-editing');
+  const decoded = originalText.replace(/&#39;/g,"'").replace(/&quot;/g,'"');
+  bubble.innerHTML = `
+    <div style="font-size:0.72rem;color:var(--accent);font-family:'Space Mono',monospace;margin-bottom:0.4rem;">✏ 수정 중...</div>
+    <div class="edit-row">
+      <input class="edit-input" value="${escapeForAttr(decoded)}" onkeydown="if(event.key==='Enter')confirmEdit('${bubbleId}',this.value);if(event.key==='Escape')cancelEdit('${bubbleId}','${escapeForAttr(decoded)}')">
+      <button class="btn btn-primary" style="padding:0.3rem 0.7rem;font-size:0.75rem;" onclick="confirmEdit('${bubbleId}',this.previousElementSibling.value)">수정</button>
+      <button class="btn" style="padding:0.3rem 0.7rem;font-size:0.75rem;" onclick="cancelEdit('${bubbleId}','${escapeForAttr(decoded)}')">취소</button>
+    </div>`;
+  bubble.querySelector('.edit-input').focus();
+}
+
+function cancelEdit(bubbleId, originalText){
+  const bubble = document.getElementById(bubbleId);
+  if(!bubble) return;
+  const decoded = originalText.replace(/&#39;/g,"'").replace(/&quot;/g,'"');
+  bubble.classList.remove('bubble-editing');
+  bubble.innerHTML = decoded;
+  bubble.onclick = ()=>startEdit(bubbleId, escapeForAttr(decoded));
+}
+
+function confirmEdit(bubbleId, newText){
+  newText = newText.trim();
+  if(!newText) return;
+  const bubble = document.getElementById(bubbleId);
+  if(!bubble) return;
+  bubble.classList.remove('bubble-editing');
+  bubble.innerHTML = newText;
+  bubble.onclick = ()=>startEdit(bubbleId, escapeForAttr(newText));
+  // 히스토리에 수정 사항 반영하여 Gemini에 재전송
+  const correctionMsg = `이전 답변을 수정합니다: "${newText}"`;
+  chatHistory.push({ role:'user', parts:[{text: correctionMsg}] });
+  appendTyping();
+  document.getElementById('answerInput').disabled = true;
+  _callGemini();
+}
+
+// ── 타이핑 인디케이터 ──────────────────────────
 function appendTyping(){
   const log = document.getElementById('chatLog');
   const div = document.createElement('div');
@@ -789,99 +933,161 @@ function appendTyping(){
   log.appendChild(div);
   log.scrollTop = log.scrollHeight;
 }
-
 function removeTyping(){
   const el = document.getElementById('typingIndicator');
   if(el) el.remove();
 }
 
-async function sendToGemini(userMessage, isFirstMsg=false){
-  const apiKey = document.getElementById('apiKey').value.trim();
+// ── 메시지 전송 ────────────────────────────────
+function submitAnswer(){
+  const input = document.getElementById('answerInput');
+  if(!input || input.disabled) return;
+  const val = input.value.trim();
+  if(!val) return;
+  input.value = '';
+  // UI에 내 말풍선 (수정 가능)
+  appendBubble('user', val, '', true);
+  chatHistory.push({ role:'user', parts:[{text: val}] });
+  appendTyping();
+  input.disabled = true;
+  _callGemini();
+}
 
-  // 사용자 메시지 추가 (첫 시작 메시지는 UI에 안 보임)
-  if(!isFirstMsg && userMessage){
-    chatHistory.push({ role:'user', parts:[{text: userMessage}] });
-  } else if(isFirstMsg){
+// ── Gemini 호출 (공용) ─────────────────────────
+async function sendToGemini(userMessage, isFirstMsg=false){
+  if(isFirstMsg){
     chatHistory.push({ role:'user', parts:[{text: userMessage}] });
   }
-
-  // 타이핑 인디케이터
   appendTyping();
-  document.getElementById('answerInput').disabled = true;
+  const input = document.getElementById('answerInput');
+  if(input) input.disabled = true;
+  await _callGemini();
+}
 
+async function _callGemini(){
+  const apiKey = document.getElementById('apiKey').value.trim();
   try {
-    const body = {
-      system_instruction: { parts:[{text: SYSTEM_PROMPT}] },
-      contents: chatHistory,
-      generationConfig: { maxOutputTokens: 8192, temperature: 0.8 }
-    };
-
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          system_instruction:{ parts:[{text: SYSTEM_PROMPT}] },
+          contents: chatHistory,
+          generationConfig:{ maxOutputTokens:8192, temperature:0.8 }
+        })
+      }
     );
-
     if(!res.ok){
       const err = await res.json().catch(()=>({}));
       throw new Error(err?.error?.message || `HTTP ${res.status}`);
     }
-
     const data = await res.json();
     const aiText = (data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').trim();
-
     if(!aiText) throw new Error('빈 응답. API 키와 할당량을 확인하세요.');
 
-    // 히스토리에 AI 응답 추가
     chatHistory.push({ role:'model', parts:[{text: aiText}] });
-
     removeTyping();
-
-    // 시나리오 완성 감지
-    if(aiText.includes('===SCENARIO_START===')){
-      const scenarioRaw = aiText.split('===SCENARIO_START===')[1].split('===SCENARIO_END===')[0].trim();
-      const chatMsg = aiText.split('===SCENARIO_START===')[0].trim();
-      if(chatMsg) appendBubble('ai', chatMsg.replace(/\n/g,'<br>'));
-      // 성공 메시지
-      appendBubble('ai',
-        `<strong style="color:var(--green);">✓ 시나리오가 완성되었습니다!</strong><br>SCENARIO 탭에서 확인하고 필요하면 수정 후 Shot List를 생성하세요.`,
-        'border-color:var(--green);'
-      );
-      document.getElementById('scenario').value = scenarioRaw;
-      const titleMatch = scenarioRaw.match(/^#\s+(.+)/m);
-      if(titleMatch) document.getElementById('projectTitle').value = titleMatch[1].trim();
-      interviewDone = true;
-      // 입력창 → 다음 버튼으로 교체
-      document.getElementById('answerRow').innerHTML =
-        `<button class="btn btn-primary ml-auto" style="width:100%;justify-content:center;padding:0.875rem;" onclick="goStep(1)">시나리오 확인 → SCENARIO 편집 →</button>`;
-    } else {
-      // 일반 인터뷰 대화
-      questionCount++;
-      appendBubble('ai', aiText.replace(/\n/g,'<br>'));
-      document.getElementById('answerInput').disabled = false;
-      document.getElementById('answerInput').focus();
-      // 진행 도트 업데이트
-      updateProgressDots(questionCount);
-    }
+    handleAiResponse(aiText);
 
   } catch(e){
     removeTyping();
     appendBubble('ai',
-      `<strong style="color:var(--red);">⚠ 오류: ${e.message}</strong><br><span style="font-size:0.8rem;color:var(--text3);">API 키를 확인하거나 잠시 후 다시 시도하세요.</span>`,
+      `<strong style="color:var(--red);">⚠ 오류: ${e.message}</strong><br>
+       <span style="font-size:0.78rem;color:var(--text3);">API 키를 확인하거나 잠시 후 다시 시도하세요.</span>`,
       'border-color:var(--red);'
     );
-    document.getElementById('answerInput').disabled = false;
-    // 재시도 버튼 추가
-    const log = document.getElementById('chatLog');
-    const btn = document.createElement('button');
-    btn.className = 'btn btn-primary';
-    btn.style.cssText = 'margin:0.5rem auto;display:block;';
-    btn.textContent = '↻ 다시 시도';
-    btn.onclick = () => { btn.remove(); sendToGemini(userMessage, isFirstMsg); };
-    log.appendChild(btn);
-    log.scrollTop = log.scrollHeight;
+    const input = document.getElementById('answerInput');
+    if(input){ input.disabled = false; input.focus(); }
   }
 }
 
+// ── AI 응답 처리 ───────────────────────────────
+function handleAiResponse(aiText){
+  const hasScenario = aiText.includes('===SCENARIO_START===') && aiText.includes('===SCENARIO_END===');
+
+  if(hasScenario){
+    const scenarioRaw = aiText.split('===SCENARIO_START===')[1].split('===SCENARIO_END===')[0].trim();
+    const chatMsg = aiText.split('===SCENARIO_START===')[0].trim();
+    const afterMsg = aiText.split('===SCENARIO_END===')[1]?.trim() || '';
+
+    if(chatMsg) appendBubble('ai', chatMsg.replace(/\n/g,'<br>'));
+
+    // 시나리오 저장 & SCENARIO 탭에 자동 적용
+    latestScenario = scenarioRaw;
+    document.getElementById('scenario').value = scenarioRaw;
+    const titleMatch = scenarioRaw.match(/^#\s+(.+)/m);
+    if(titleMatch) document.getElementById('projectTitle').value = titleMatch[1].trim();
+
+    // 인터뷰 탭 미리보기 업데이트
+    updateScenarioPreview(scenarioRaw);
+
+    // 완성/수정 알림 버블
+    const isUpdate = interviewDone;
+    appendBubble('ai',
+      `<strong style="color:var(--green);">${isUpdate ? '✓ 시나리오가 수정되었습니다!' : '✓ 시나리오가 완성되었습니다!'}</strong><br>
+       아래 미리보기에서 전체 내용을 확인하고, 추가 수정이 필요하면 계속 채팅하세요.`,
+      'border-color:var(--green);'
+    );
+    if(afterMsg) appendBubble('ai', afterMsg.replace(/\n/g,'<br>'));
+
+    interviewDone = true;
+
+    // 하단 버튼 바 표시
+    const btns = document.getElementById('scenarioBtns');
+    btns.style.display = 'flex';
+
+    // 입력창 계속 활성화
+    const input = document.getElementById('answerInput');
+    if(input){
+      input.disabled = false;
+      input.placeholder = '추가 수정·질문 입력 (예: "씬 2를 더 역동적으로", "소재를 카페로 바꿔줘")';
+      input.focus();
+    }
+
+    updateProgressDots(9);
+
+  } else {
+    // 일반 인터뷰 대화
+    questionCount++;
+    appendBubble('ai', aiText.replace(/\n/g,'<br>'));
+    updateProgressDots(questionCount);
+    const input = document.getElementById('answerInput');
+    if(input){ input.disabled = false; input.focus(); }
+  }
+}
+
+// ── 시나리오 미리보기 ──────────────────────────
+function updateScenarioPreview(text){
+  const preview = document.getElementById('scenarioPreview');
+  const body = document.getElementById('scenarioPreviewBody');
+  if(!preview || !body) return;
+  body.textContent = text;
+  preview.classList.add('on');
+  // 미리보기 위치로 스크롤
+  setTimeout(()=> preview.scrollIntoView({behavior:'smooth', block:'nearest'}), 200);
+}
+
+function togglePreview(){
+  const body = document.getElementById('scenarioPreviewBody');
+  const btn = document.querySelector('#scenarioPreview .scenario-preview-label button');
+  if(!body) return;
+  const collapsed = body.style.display === 'none';
+  body.style.display = collapsed ? '' : 'none';
+  if(btn) btn.textContent = collapsed ? '접기 ▲' : '펼치기 ▼';
+}
+
+// ── 시나리오 수동 적용 버튼 ────────────────────
+function applyScenarioFromChat(){
+  if(!latestScenario){ toast('적용할 시나리오가 없습니다','error'); return; }
+  document.getElementById('scenario').value = latestScenario;
+  const titleMatch = latestScenario.match(/^#\s+(.+)/m);
+  if(titleMatch) document.getElementById('projectTitle').value = titleMatch[1].trim();
+  toast('✓ 최신 시나리오가 적용되었습니다','success');
+}
+
+// ── 진행 도트 ──────────────────────────────────
 function updateProgressDots(count){
   const total = 9;
   const wrap = document.getElementById('progressDots');
@@ -891,16 +1097,6 @@ function updateProgressDots(count){
     else if(i === count-1) cls += ' active';
     return `<div class="${cls}"></div>`;
   }).join('');
-}
-
-function submitAnswer(){
-  if(interviewDone) return;
-  const input = document.getElementById('answerInput');
-  const val = input.value.trim();
-  if(!val || input.disabled) return;
-  input.value = '';
-  appendBubble('user', val);
-  sendToGemini(val);
 }
 
 // ══════════════════════════════════════════════════════
@@ -923,7 +1119,6 @@ function setRatio(btn,r){
 }
 function goStep(n){
   const panels=[0,1,2,3];
-  if(n===1&&!document.getElementById('scenario').value.trim()&&currentQ<QUESTIONS.length) return;
   if(n===2&&!shotList.length) return;
   if(n===3&&!boards.length) return;
   panels.forEach(p=>{
@@ -940,8 +1135,12 @@ function goStep(n){
       b.classList.add(unlocked?'done':'locked');
     }
   });
-  if(n===2) document.getElementById('styleBadge').textContent=getStyleLabel();
+  if(n===2) buildStyleGrid();
 }
+
+function buildSlStylePicker(){ /* 더 이상 사용 안 함 — styleGrid가 Shot List 탭에 직접 있음 */ }
+
+function pickSlStyle(id){ pickStyle(id); }
 function clearAll(){
   document.getElementById('projectTitle').value='';
   document.getElementById('scenario').value='';
@@ -1019,7 +1218,7 @@ const SAMPLES=[
 function loadSample(i){ const s=SAMPLES[i]; document.getElementById('projectTitle').value=s.title; document.getElementById('scenario').value=s.scenario; }
 
 // ══════════════════════════════════════════════════════
-//  PARSE SCENARIO
+//  PARSE SCENARIO — 신형식(클립 번호 포함) + 구형식 모두 지원
 // ══════════════════════════════════════════════════════
 function generateShotList(){
   const sc=document.getElementById('scenario').value.trim();
@@ -1031,39 +1230,214 @@ function generateShotList(){
   document.getElementById('sl-title').textContent=document.getElementById('projectTitle').value||'Shot List';
   document.getElementById('sl-meta').textContent=`총 ${shotList.length}개 클립`;
 }
+
 function parse(text){
-  const shots=[],lines=text.split('\n');
-  let scene=0;
+  const shots=[], lines=text.split('\n');
+  let seqNum=0, sceneNum=0, sceneLabel='', seqLabel='';
+  const SEQ_LABELS=['','기','승','전','결'];
+
+  // 인라인 자막/푸티지 맵 먼저 구축
+  const subMap={}, footMap={};
+  for(const l of lines){
+    // 자막: "내용" (S1-C1, Xs)
+    const sm = l.match(/^자막\s*:\s*["""'](.+?)["""']\s*\(([^,)]+)/);
+    if(sm) subMap[sm[2].trim().replace(/\s+/g,'')] = sm[1].trim();
+    // 푸티지: S1-C1 | 사이트 | url | 검색어
+    const fm = l.match(/^푸티지\s*:\s*([^\|]+)\|([^\|]+)\|([^\|]+)\|(.+)/);
+    if(fm) footMap[fm[1].trim().replace(/\s+/g,'')] = {
+      site: fm[2].trim(), url: fm[3].trim(), keyword: fm[4].trim()
+    };
+  }
+
+  let sectionType='clip';
+
   for(let i=0;i<lines.length;i++){
     const l=lines[i].trim();
-    if(/씬\s*\d+|Scene\s*\d+|###.*(기|승|전|결)/i.test(l)) scene++;
-    if(!/^\|\s*(Clip\s*\d+|\d+)\s*\|/i.test(l)) continue;
-    const c=l.split('|').map(s=>s.trim()).filter(Boolean);
-    if(c.length<4) continue;
-    const g=(n,fb='')=>c[n]||fb;
-    shots.push({id:shots.length+1,scene:scene||1,clip:g(0,`Clip ${shots.length+1}`),
-      time:g(1,'-'),shotSize:g(2,'미디엄'),angle:g(3,'아이레벨'),
-      composition:g(4,'룰오브써드'),description:g(5,'내용'),
-      camera:g(6,'스태틱'),transition:g(7,'Cut'),
-      lens:lensOf(g(2,'')),ratio:selRatio,note:subOf(lines,i)});
+
+    // 시퀀스 헤더 (### 🔵 시퀀스 1 또는 ### 🔵 기)
+    if(/^###\s*(🔵|🟡|🔴|🟢)/.test(l)){
+      seqNum++;
+      seqLabel = SEQ_LABELS[seqNum] || `${seqNum}`;
+      sectionType='clip';
+      continue;
+    }
+    // 씬 헤더 (#### 씬 N 또는 씬 번호가 있는 줄)
+    if(/^####\s*씬\s*\d+|^###\s*씬\s*\d+/.test(l)){
+      sceneNum++;
+      sceneLabel = l.replace(/^#+\s*/,'').replace(/씬\s*\d+\s*[—-]\s*/,'').trim();
+      sectionType='clip';
+      continue;
+    }
+    // 자막/푸티지 인라인 줄은 테이블 파싱 스킵
+    if(/^자막\s*:|^푸티지\s*:/.test(l)) continue;
+    // 배경음악·씬 메타 줄 스킵
+    if(/^-\s*(장소|시간|씬\s*목적|배경음악|효과음|분위기)/.test(l)) continue;
+
+    // 파이프 테이블 아닌 줄
+    if(!l.startsWith('|')) continue;
+    // 구분선
+    if(/^\|\s*[-:]+/.test(l)) continue;
+
+    const cols = l.split('|').map(s=>s.trim()).filter(Boolean);
+    if(cols.length < 5) continue;
+
+    const first = cols[0].toLowerCase();
+    // 헤더 행 제외
+    if(['클립','클립 번호','clip','#','번호'].includes(first)) continue;
+    if(/^(시간|샷|앵글|구도|내용|카메라|트랜|그래픽|자막|추천)/.test(first)) continue;
+
+    const g=(n,fb='')=>cols[n]?.trim()||fb;
+
+    const clipRaw  = g(0, `S${sceneNum||1}-C${shots.length+1}`);
+    const time     = g(1,'-');
+    const shotSize = g(2,'미디엄');
+    const angle    = g(3,'아이레벨');
+    const comp     = g(4,'룰오브써드');
+    const desc     = g(5,'');
+    const camera   = g(6,'스태틱');
+    const transit  = g(7,'Cut');
+
+    // 내용 설명이 없거나 placeholder이면 스킵
+    if(!desc || desc.length < 3) continue;
+    if(/^(내용|설명|description)$/i.test(desc)) continue;
+    // 자막 표 행이 섞인 경우 제거 (자막 스타일 키워드 포함)
+    if(/미니멀|노출\s*시간|자막\s*스타일|https?:\/\//.test(desc)) continue;
+
+    const clipKey = clipRaw.replace(/\s+/g,'');
+    const note = subMap[clipKey] || subOf(lines,i);
+    const foot = footMap[clipKey];
+
+    // 정규화: 파서가 읽은 값 → ANGLES/COMPS/SHOT_SIZES id와 일치하도록
+    const normShot  = normalizeShotSize(shotSize);
+    const normAngle = normalizeAngle(angle);
+    const normComp  = normalizeComp(comp);
+    const normCam   = normalizeCamera(camera);
+
+    shots.push({
+      id: shots.length+1,
+      scene: sceneNum||seqNum||1,
+      seqLabel: seqLabel||'',
+      sceneLabel,
+      clip: clipRaw,
+      time,
+      shotSize:    normShot,
+      angle:       normAngle,
+      composition: normComp,
+      description: desc,
+      camera:      normCam,
+      transition:  transit,
+      lens: lensOf(normShot),
+      ratio: selRatio,
+      note,
+      footSite: foot?.site||'',
+      footUrl:  foot?.url||'',
+      footKw:   foot?.keyword||'',
+      effect: '-'
+    });
   }
   return shots;
 }
+
+// 자막 표에서 클립 → 자막 맵 구축
+function buildSubMap(lines){
+  const map={};
+  let inSubTable=false;
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i].trim();
+    // 자막 표 시작 감지
+    if(/자막\s*표|자막\s*\||subtitle/i.test(l)) { inSubTable=true; continue; }
+    // 다음 큰 섹션 나오면 종료
+    if(inSubTable && /^###/.test(l) && !/자막/.test(l)) { inSubTable=false; }
+    if(!inSubTable) {
+      // 인라인 자막: 자막: "내용" (Clip XX, N초)
+      const inline = l.match(/자막\s*:\s*["""']?(.+?)["""']?\s*\((.+?)\)/);
+      if(inline){
+        const content=inline[1].trim();
+        const ref=inline[2].trim();
+        // ref 안에 클립명 추출
+        const clipRef=ref.match(/Clip\s*\d+/i);
+        if(clipRef) map[clipRef[0].replace(/\s+/,'').toUpperCase()]=content;
+      }
+      continue;
+    }
+    if(!l.startsWith('|')||/^\|\s*[-:]/.test(l)) continue;
+    const cols=l.split('|').map(s=>s.trim()).filter(Boolean);
+    if(cols.length<2) continue;
+    const first=cols[0].toLowerCase();
+    if(['클립','clip'].includes(first)||/자막/.test(first)) continue;
+    // cols[0]=클립번호, cols[1]=자막내용
+    map[cols[0]]=cols[1]||'';
+  }
+  return map;
+}
+// ── 값 정규화 (파서 저장값 → ANGLES/COMPS/SHOT id 통일) ──────────────
+function normalizeAngle(v){
+  v=(v||'').replace(/\s+/g,'').toLowerCase();
+  if(v.includes('버드')||v.includes('bird')) return '버드아이뷰';   // '버드아이뷰'가 '아이'도 포함하므로 먼저
+  if(v.includes('아이레벨')||v.includes('eyelevel')||v.includes('미들')) return '아이레벨';
+  if(v.includes('아이')||v.includes('eye')) return '아이레벨';
+  if(v.includes('로우')||v.includes('low')) return '로우앵글';
+  if(v.includes('하이')||v.includes('high')) return '하이앵글';
+  if(v.includes('더치')||v.includes('dutch')) return '더치앵글';
+  if(v.includes('오버')||v.includes('over')) return '오버숄더';
+  return '아이레벨';
+}
+function normalizeComp(v){
+  v=(v||'').replace(/\s+/g,'').toLowerCase();
+  if(v.includes('룰')||v.includes('thirds')||v.includes('rule')) return '룰오브써드';
+  if(v.includes('센터')||v.includes('center')||v.includes('중심')||v.includes('중앙')) return '센터프레임';
+  if(v.includes('대칭')||v.includes('symm')) return '대칭';
+  if(v.includes('리딩')||v.includes('lead')) return '리딩룸';
+  if(v.includes('프레임인')||v.includes('framein')) return '프레임인프레임';
+  if(v.includes('삼각')||v.includes('triangle')) return '삼각구도';
+  if(v.includes('대각')||v.includes('diag')||v.includes('사선')) return '대각선 구도';
+  if(v.includes('수직')||v.includes('패턴')) return '센터프레임';
+  return '룰오브써드';
+}
+function normalizeShotSize(v){
+  v=(v||'').replace(/\s+/g,'').toLowerCase();
+  if(v.includes('ews')||v.includes('익스트림와이드')) return '익스트림 와이드';
+  if(v.includes('mw')||v.includes('미디엄와이드')) return '미디엄 와이드';
+  if(v.includes('ws')||v.includes('와이드')) return '와이드';
+  if(v.includes('mcu')||v.includes('미디엄클로즈')) return '미디엄 클로즈업';
+  if(v.includes('ecu')||v.includes('익스트림클로즈')) return '익스트림 클로즈업';
+  if(v.includes('cu')||v.includes('클로즈')) return '클로즈업';
+  if(v.includes('ms')||v.includes('미디엄')) return '미디엄';
+  return '미디엄';
+}
+function normalizeCamera(v){
+  v=(v||'').toLowerCase();
+  if(v.includes('팬')) return '팬';
+  if(v.includes('틸트업')||v.includes('틸트 업')) return '틸트 업';
+  if(v.includes('틸트')) return '틸트 다운';
+  if(v.includes('줌인')||v.includes('줌 인')) return '줌인';
+  if(v.includes('줌아웃')||v.includes('줌 아웃')) return '줌아웃';
+  if(v.includes('트래킹')) return '트래킹';
+  if(v.includes('핸드헬드')) return '핸드헬드';
+  if(v.includes('크레인업')||v.includes('크레인 업')) return '크레인 업';
+  if(v.includes('크레인')) return '크레인 다운';
+  if(v.includes('드론')) return '드론 팬';
+  if(v.includes('슬로우')) return '슬로우모션';
+  if(v.includes('타임')) return '타임랩스';
+  return '스태틱';
+}
+// ────────────────────────────────────────────────────────
 function lensOf(s){
-  s=s.toLowerCase();
+  s=(s||'').toLowerCase();
   if(s.includes('익스트림 와이드')||s.includes('extreme wide')) return '14-24mm';
+  if(s.includes('미디엄 와이드')||s.includes('medium wide')) return '35mm';
   if(s.includes('와이드')||s.includes('wide')) return '24-35mm';
-  if(s.includes('미디엄 와이드')) return '35mm';
   if(s.includes('미디엄 클로즈')||s.includes('medium close')) return '85mm';
-  if(s.includes('클로즈')||s.includes('close')) return '85-135mm';
   if(s.includes('익스트림 클로즈')||s.includes('extreme close')) return '100mm macro';
+  if(s.includes('클로즈')||s.includes('close')) return '85-135mm';
+  if(s.includes('미디엄')||s.includes('medium')) return '50mm';
   return '50mm';
 }
 function subOf(lines,from){
-  for(let j=from;j<Math.min(from+8,lines.length);j++){
+  for(let j=from;j<Math.min(from+10,lines.length);j++){
     const l=lines[j];
     if(l.includes('자막:')||l.includes('캡션:'))
-      return l.replace(/자막:|캡션:/,'').trim().replace(/"/g,'');
+      return l.replace(/자막:|캡션:/,'').trim().replace(/["""]/g,'');
   }
   return '';
 }
@@ -1081,11 +1455,19 @@ function getShotSvg(shotId){
 }
 
 function renderTable(){
+  // 렌더 전 shotList 값 정규화 (파서 이후 수동 변경 포함)
+  shotList.forEach(s=>{
+    s.shotSize    = normalizeShotSize(s.shotSize);
+    s.angle       = normalizeAngle(s.angle);
+    s.composition = normalizeComp(s.composition);
+    s.camera      = normalizeCamera(s.camera);
+    s.lens        = lensOf(s.shotSize);
+  });
   document.getElementById('shotBody').innerHTML=shotList.map((s,i)=>`
     <tr>
       <td class="scene-cell">S${s.scene}</td>
       <td style="font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--text3)">${s.clip}</td>
-      <td style="min-width:140px;max-width:190px"><div class="trunc2" style="font-size:0.78rem;color:var(--text)">${s.description}</div></td>
+      <td style="min-width:140px;max-width:220px"><div class="desc-view" style="font-size:0.72rem;color:var(--text);line-height:1.45;word-break:keep-all;" onclick="startDescEdit('sl',${i},this)">${s.description}</div></td>
       <td><span class="tag tag-purple">${s.time}</span></td>
       <td>
         <button class="pick-btn" onclick="openPicker(${i})" title="클릭 → 시각 선택기">
@@ -1103,6 +1485,39 @@ function renderTable(){
     </tr>`).join('');
 }
 function upd(i,f,v){ shotList[i][f]=v; }
+
+// ── 내용 설명 인라인 편집 ────────────────────────────────
+function startDescEdit(type, i, el){
+  const current = type==='sl' ? shotList[i].description : boards[i].description;
+  const wrap = document.createElement('div');
+  wrap.className='desc-edit-wrap';
+  wrap.innerHTML=`
+    <textarea class="desc-textarea" id="descTa_${type}_${i}">${current}</textarea>
+    <div class="desc-save-row">
+      <button class="desc-save-btn" onclick="saveDesc('${type}',${i})">저장</button>
+      <button class="desc-cancel-btn" onclick="cancelDesc('${type}',${i},'${current.replace(/'/g,"\\'")}')">취소</button>
+    </div>`;
+  el.replaceWith(wrap);
+  document.getElementById(`descTa_${type}_${i}`).focus();
+}
+
+function saveDesc(type, i){
+  const ta = document.getElementById(`descTa_${type}_${i}`);
+  if(!ta) return;
+  const newDesc = ta.value.trim();
+  if(!newDesc) return;
+  // 양방향 동기화
+  if(shotList[i]) shotList[i].description = newDesc;
+  if(boards[i])   boards[i].description   = newDesc;
+  // 렌더 갱신
+  renderTable();
+  if(type==='sb') updateCard(i);
+}
+
+function cancelDesc(type, i, original){
+  if(type==='sl') renderTable();
+  else updateCard(i);
+}
 function delShot(i){ shotList.splice(i,1); renderTable(); document.getElementById('sl-meta').textContent=`총 ${shotList.length}개 클립`; }
 function addShot(){
   const last=shotList.length?shotList[shotList.length-1].scene:1;
@@ -1117,7 +1532,17 @@ async function generateStoryboard(){
   const k=document.getElementById('apiKey').value.trim();
   if(!k){ toast('API 키를 입력하세요','error'); return; }
   if(!shotList.length){ toast('Shot List가 없습니다','error'); return; }
-  boards=shotList.map(s=>({...s,img:null,status:'pending'}));
+  boards=shotList.map(s=>({
+    ...s,
+    img: null,
+    status: 'pending',
+    // 정규화: Shot List에서 바뀐 값도 포함해서 항상 통일된 id로
+    shotSize:    normalizeShotSize(s.shotSize),
+    angle:       normalizeAngle(s.angle),
+    composition: normalizeComp(s.composition),
+    camera:      normalizeCamera(s.camera),
+    lens:        lensOf(normalizeShotSize(s.shotSize)),
+  }));
   renderGrid();
   goStep(3);
   document.getElementById('sb-title').textContent=document.getElementById('projectTitle').value||'Storyboard';
@@ -1160,16 +1585,26 @@ async function runAll(){
 function buildPrompt(b){
   const ratioMap={'16:9':'widescreen 16:9','9:16':'vertical 9:16','1:1':'square','4:3':'4:3','2.39:1':'ultra-wide anamorphic 2.39:1'};
   const shotMap={'익스트림 와이드':'extreme wide shot','와이드':'wide shot','미디엄 와이드':'medium wide shot','미디엄':'medium shot','미디엄 클로즈업':'medium close-up shot','클로즈업':'close-up shot','익스트림 클로즈업':'extreme close-up'};
-  return `Create a professional film storyboard panel.
+  const angleMap={'아이레벨':'eye-level angle','로우앵글':'low angle (shooting upward)','하이앵글':'high angle (shooting downward)','버드아이뷰':"bird's eye view (directly overhead)",'더치앵글':'dutch angle (tilted camera)','오버숄더':'over-the-shoulder'};
+  const compMap={'룰오브써드':'rule of thirds','센터프레임':'center frame','대칭':'symmetrical composition','리딩룸':'leading room','프레임인프레임':'frame-within-frame','삼각구도':'triangular composition','대각선 구도':'diagonal composition'};
+  const camMap={'스태틱':'static (locked off)','팬':'pan','틸트 업':'tilt up','틸트 다운':'tilt down','줌인':'zoom in','줌아웃':'zoom out','트래킹':'tracking shot','핸드헬드':'handheld','크레인 업':'crane up','크레인 다운':'crane down','드론 팬':'drone pan','슬로우모션':'slow motion','타임랩스':'time-lapse'};
+  return `Create a professional film storyboard panel. Pure visual image only.
+
 STYLE: ${getStylePrompt()} — maintain this exact style consistently.
 FRAME: ${ratioMap[b.ratio]||'widescreen 16:9'} aspect ratio.
 SCENE: ${b.description}
 SHOT SIZE: ${shotMap[b.shotSize]||b.shotSize}
-CAMERA ANGLE: ${b.angle}
-COMPOSITION: ${b.composition}
-CAMERA MOVEMENT: ${b.camera}
+CAMERA ANGLE: ${angleMap[b.angle]||b.angle}
+COMPOSITION: ${compMap[b.composition]||b.composition}
+CAMERA MOVEMENT: ${camMap[b.camera]||b.camera}
 LENS: ${b.lens}
-RULES: Single storyboard frame only. No text, labels, or captions inside the image. Show clear subject, depth, and lighting direction. Professional director's storyboard quality.`;
+
+STRICT RULES — MUST FOLLOW:
+- ABSOLUTELY NO text, letters, words, subtitles, captions, watermarks, or any writing anywhere in the image.
+- ABSOLUTELY NO overlaid graphics, UI elements, or annotations.
+- Single storyboard frame only. Pure visual composition.
+- Show clear subject, depth, and lighting direction.
+- Professional director's storyboard quality.`;
 }
 
 async function callAPI(k,prompt){
@@ -1194,51 +1629,228 @@ function cardImgHtml(b,i){
   if(b.status==='generating') return `<div class="sb-generating" style="aspect-ratio:${ar}"><div class="spinner"></div><div style="font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--text3)">GENERATING...</div></div>`;
   if(b.status==='done'&&b.img) return `<img class="sb-img" src="${b.img}" style="aspect-ratio:${ar}" alt="">`;
   if(b.status==='error') return `<div class="sb-placeholder" style="aspect-ratio:${ar}"><span style="font-size:1.4rem">⚠</span><span>${b.err||'실패'}</span></div>`;
-  return `<div class="sb-placeholder" style="aspect-ratio:${ar}"><span style="font-size:1.4rem">🎬</span><span>S${b.scene}·${b.clip}</span></div>`;
+  return `<div class="sb-placeholder" style="aspect-ratio:${ar}"><span style="font-size:1.4rem">🎬</span><span>${b.clip}</span></div>`;
 }
+function fullCardHtml(b,i){
+  const ar=b.ratio.replace(':','/');
+  let imgHtml;
+  if(b.status==='generating') imgHtml=`<div class="sb-generating" style="aspect-ratio:${ar}"><div class="spinner"></div><div style="font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--text3)">GENERATING...</div></div>`;
+  else if(b.status==='done'&&b.img) imgHtml=`<img class="sb-img" src="${b.img}" style="aspect-ratio:${ar}" alt="">`;
+  else if(b.status==='error') imgHtml=`<div class="sb-placeholder" style="aspect-ratio:${ar}"><span style="font-size:1.4rem">⚠</span><span>${b.err||'실패'}</span></div>`;
+  else imgHtml=`<div class="sb-placeholder" style="aspect-ratio:${ar}"><span style="font-size:1.4rem">🎬</span><span>${b.clip}</span></div>`;
+
+  const shotOpts = SHOT_SIZES.map(s=>s.id);
+  const angleOpts = ANGLES.map(a=>a.id);
+  const compOpts  = COMPS.map(c=>c.id);
+  const lensOpts  = ['14-24mm','24-35mm','35mm','50mm','85mm','85-135mm','100mm macro'];
+  const s=(field,opts,val)=>`<select class="sb-select" onchange="updBoard(${i},'${field}',this.value)">${opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}</select>`;
+
+  return `
+  <div class="sb-card" id="sbc-${i}">
+    <div class="sb-img-wrap">
+      ${imgHtml}
+      <div class="sb-badge">${b.clip}</div>
+    </div>
+    <div class="sb-info">
+      <div class="sb-title-row">
+        <div class="desc-view sb-title" style="font-size:0.75rem;font-weight:600;line-height:1.45;word-break:keep-all;flex:1;margin-right:0.5rem;" onclick="startDescEdit('sb',${i},this)">${b.description}</div>
+        <div class="sb-dur" style="flex-shrink:0;">${b.time}</div>
+      </div>
+      <div class="sb-controls">
+        <div class="sb-ctrl-group"><span class="sb-ctrl-label">샷</span>${s('shotSize',shotOpts,b.shotSize)}</div>
+        <div class="sb-ctrl-group"><span class="sb-ctrl-label">앵글</span>${s('angle',angleOpts,b.angle)}</div>
+        <div class="sb-ctrl-group"><span class="sb-ctrl-label">구도</span>${s('composition',compOpts,b.composition)}</div>
+        <div class="sb-ctrl-group"><span class="sb-ctrl-label">카메라</span>${s('camera',CAM,b.camera)}</div>
+        <div class="sb-ctrl-group"><span class="sb-ctrl-label">렌즈</span>${s('lens',lensOpts,b.lens)}</div>
+        <div class="sb-ctrl-group"><span class="sb-ctrl-label">전환</span>${s('transition',TR,b.transition)}</div>
+        <button class="btn btn-primary sb-apply-btn" onclick="applyAndRegen(${i})">↻ 재생성</button>
+      </div>
+      ${b.note?`<div class="sb-note" style="margin-top:0.4rem;font-size:0.72rem;color:var(--text3);">자막: ${b.note}</div>`:''}
+    </div>
+  </div>`;
+}
+
 function renderGrid(){
-  document.getElementById('sbGrid').innerHTML=boards.map((b,i)=>`
-    <div class="sb-card" id="sbc-${i}">
-      <div class="sb-img-wrap">
-        ${cardImgHtml(b,i)}
-        <div class="sb-badge">S${b.scene}·${b.clip}</div>
-        ${b.status==='done'?`<button class="sb-regen" onclick="regenOne(${i})">↻ 재생성</button>`:''}
-      </div>
-      <div class="sb-info">
-        <div class="sb-title-row">
-          <div class="sb-title">${b.description.slice(0,55)}${b.description.length>55?'…':''}</div>
-          <div class="sb-dur">${b.time}</div>
-        </div>
-        <div class="sb-tags">
-          <span class="tag tag-purple">${b.shotSize}</span>
-          <span class="tag tag-blue">${b.angle}</span>
-          <span class="tag tag-orange">${b.composition}</span>
-          <span class="tag tag-green">${b.camera}</span>
-          <span class="tag tag-yellow">${b.lens}</span>
-        </div>
-        ${b.transition?`<div class="sb-note">트랜지션: ${b.transition}${b.note?' · 자막: '+b.note:''}</div>`:''}
-      </div>
-    </div>`).join('');
+  document.getElementById('sbGrid').innerHTML=boards.map((b,i)=>fullCardHtml(b,i)).join('');
 }
+
 function updateCard(i){
-  const card=document.getElementById(`sbc-${i}`);
-  if(!card) return;
-  const wrap=card.querySelector('.sb-img-wrap');
-  const old=wrap.querySelector('img,.sb-placeholder,.sb-generating');
-  if(old){const tmp=document.createElement('div');tmp.innerHTML=cardImgHtml(boards[i],i);old.replaceWith(tmp.firstElementChild);}
-  if(boards[i].status==='done'&&!wrap.querySelector('.sb-regen')){
-    const btn=document.createElement('button');
-    btn.className='sb-regen';btn.textContent='↻ 재생성';btn.onclick=()=>regenOne(i);
-    wrap.appendChild(btn);
-  }
+  const el=document.getElementById(`sbc-${i}`);
+  if(el){ const tmp=document.createElement('div'); tmp.innerHTML=fullCardHtml(boards[i],i); el.replaceWith(tmp.firstElementChild); }
 }
-async function regenOne(i){
+
+function updBoard(i,field,val){
+  boards[i][field]=val;
+  if(shotList[i]) shotList[i][field]=val;
+}
+
+async function applyAndRegen(i){
   const k=document.getElementById('apiKey').value.trim();
   if(!k){toast('API 키를 입력하세요','error');return;}
-  boards[i].status='generating';boards[i].img=null;updateCard(i);
-  try{boards[i].img=await callAPI(k,buildPrompt(boards[i]));boards[i].status='done';}
-  catch(e){boards[i].status='error';boards[i].err=e.message;toast('실패: '+e.message,'error');}
+  boards[i].status='generating'; boards[i].img=null; updateCard(i);
+  try{
+    boards[i].img=await callAPI(k,buildPrompt(boards[i]));
+    boards[i].status='done';
+  }catch(e){
+    boards[i].status='error'; boards[i].err=e.message; toast('실패: '+e.message,'error');
+  }
   updateCard(i);
+}
+
+async function regenOne(i){
+  return applyAndRegen(i);
+}
+
+// ══════════════════════════════════════════════════════
+//  DOWNLOAD ALL IMAGES
+// ══════════════════════════════════════════════════════
+async function downloadAllImages(){
+  const done = boards.filter(b=>b.status==='done'&&b.img);
+  if(!done.length){ toast('다운로드할 이미지가 없습니다','error'); return; }
+
+  const btn = document.getElementById('dlImgBtn');
+  btn.textContent='⏳ 다운로드 중...'; btn.disabled=true;
+
+  const title = (document.getElementById('sb-title').textContent||'storyboard')
+    .replace(/[^\w가-힣\s\-]/g,'').trim().replace(/\s+/g,'-');
+
+  for(let i=0;i<boards.length;i++){
+    const b=boards[i];
+    if(b.status!=='done'||!b.img) continue;
+    const clip = b.clip.replace(/[\s·]/g,'_');
+    const fname = `${title}_${String(i+1).padStart(2,'0')}_${clip}.jpg`;
+
+    // base64 → blob → 다운로드
+    const res = await fetch(b.img);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=fname;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    // 브라우저 다운로드 다이얼로그 간격
+    await new Promise(r=>setTimeout(r,400));
+  }
+
+  btn.textContent='⬇ 이미지 저장'; btn.disabled=false;
+  toast(`✓ ${done.length}개 이미지 다운로드 완료`);
+}
+
+// ══════════════════════════════════════════════════════
+//  PRINT VIEW
+// ══════════════════════════════════════════════════════
+function openPrintView(){
+  const title = document.getElementById('sb-title').textContent || 'Storyboard';
+  const style = getStyleLabel();
+
+  const seqColors = {'기':'#4ecdc4','승':'#e8ff47','전':'#ff6b35','결':'#a78bfa'};
+
+  // 씬 번호 → 시퀀스 레이블 맵 구축
+  const sceneSeqMap = {};
+  boards.forEach(b=>{ if(b.seqLabel) sceneSeqMap[b.scene]=b.seqLabel; });
+
+  // 씬 구분선 HTML
+  let lastScene = null;
+
+  const rows = boards.map((b,i)=>{
+    let sceneHeader = '';
+    if(b.scene !== lastScene){
+      lastScene = b.scene;
+      const sq = b.seqLabel || sceneSeqMap[b.scene] || '';
+      const col = seqColors[sq] || '#888';
+      sceneHeader = `<tr class="scene-header-row"><td colspan="2" style="padding:6px 12px;background:#1a1a24;border-bottom:2px solid ${col};font-family:monospace;font-size:9pt;color:${col};letter-spacing:0.08em;">
+        씬 ${b.scene}${sq?' — '+sq+' 시퀀스':''}
+      </td></tr>`;
+    }
+
+    const imgSrc = b.img || '';
+    const ar = b.ratio==='9:16'?'aspect-ratio:9/16':b.ratio==='1:1'?'aspect-ratio:1/1':b.ratio==='4:3'?'aspect-ratio:4/3':b.ratio==='2.39:1'?'aspect-ratio:2.39/1':'aspect-ratio:16/9';
+
+    return `${sceneHeader}
+    <tr class="shot-row">
+      <td class="img-cell">
+        ${imgSrc
+          ? `<img src="${imgSrc}" style="width:100%;${ar};object-fit:cover;display:block;border-radius:3px;">`
+          : `<div style="width:100%;${ar};background:#1a1a2e;display:flex;align-items:center;justify-content:center;border-radius:3px;font-family:monospace;font-size:8pt;color:#555;">${b.clip}<br>이미지 없음</div>`
+        }
+      </td>
+      <td class="info-cell">
+        <div class="clip-id">${b.clip}</div>
+        <div class="desc">${b.description}</div>
+        <table class="meta-table">
+          <tr><th>시간</th><td>${b.time}</td><th>샷</th><td>${b.shotSize}</td></tr>
+          <tr><th>앵글</th><td>${b.angle}</td><th>구도</th><td>${b.composition}</td></tr>
+          <tr><th>카메라</th><td>${b.camera}</td><th>렌즈</th><td>${b.lens}</td></tr>
+          <tr><th>전환</th><td>${b.transition}</td><th>자막</th><td>${b.note||'없음'}</td></tr>
+        </table>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>${title} — Storyboard</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm 14mm; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif; background:#fff; color:#111; font-size:9pt; }
+
+  .print-header{ display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid #111; padding-bottom:6px; margin-bottom:12px; }
+  .print-header h1{ font-size:14pt; font-weight:700; }
+  .print-header .meta{ font-size:8pt; color:#555; font-family:monospace; }
+
+  table.main{ width:100%; border-collapse:collapse; }
+
+  tr.scene-header-row td{ padding:5px 10px; font-size:8pt; font-weight:700; }
+
+  tr.shot-row{ page-break-inside:avoid; border-bottom:1px solid #ddd; }
+  tr.shot-row td{ vertical-align:top; padding:8px; }
+
+  td.img-cell{ width:46%; padding-right:10px; }
+  td.info-cell{ width:54%; }
+
+  .clip-id{ font-family:monospace; font-size:9pt; font-weight:700; background:#f0f0f0; display:inline-block; padding:2px 8px; border-radius:3px; margin-bottom:6px; }
+  .desc{ font-size:9pt; line-height:1.55; color:#222; margin-bottom:8px; word-break:keep-all; }
+
+  table.meta-table{ width:100%; border-collapse:collapse; font-size:8pt; }
+  table.meta-table th{ width:12%; background:#f5f5f5; padding:3px 5px; text-align:left; color:#555; font-weight:600; border:1px solid #e0e0e0; }
+  table.meta-table td{ width:13%; padding:3px 5px; border:1px solid #e0e0e0; color:#333; }
+
+  .no-print{ display:none; }
+
+  @media screen{
+    body{ background:#f4f4f4; padding:20px; }
+    .print-wrap{ background:#fff; max-width:1000px; margin:0 auto; padding:20px; box-shadow:0 2px 16px rgba(0,0,0,0.12); }
+    .no-print{ display:flex; justify-content:center; gap:12px; margin-bottom:20px; }
+    .btn-print{ padding:10px 28px; background:#111; color:#e8ff47; border:none; border-radius:6px; font-size:10pt; font-weight:700; cursor:pointer; font-family:monospace; }
+    .btn-close{ padding:10px 20px; background:#eee; color:#333; border:none; border-radius:6px; font-size:10pt; cursor:pointer; }
+  }
+</style>
+</head>
+<body>
+<div class="no-print">
+  <button class="btn-print" onclick="window.print()">🖨 PDF로 저장 / 인쇄</button>
+  <button class="btn-close" onclick="window.close()">✕ 닫기</button>
+</div>
+<div class="print-wrap">
+  <div class="print-header">
+    <h1>${title}</h1>
+    <div class="meta">총 ${boards.length}개 클립 &nbsp;·&nbsp; ${style} 스타일 &nbsp;·&nbsp; CONTI.AI</div>
+  </div>
+  <table class="main">
+    ${rows}
+  </table>
+</div>
+</body>
+</html>`;
+
+  const w = window.open('', '_blank', 'width=1100,height=800');
+  w.document.write(html);
+  w.document.close();
 }
 
 init();
