@@ -223,20 +223,15 @@ td select{background:var(--surface3);border:1px solid var(--border2);border-radi
 <div class="step-panel active" id="step-0">
   <div class="interview-wrap">
     <div class="interview-title">🎬 시나리오 인터뷰</div>
-    <div class="interview-sub">9개 질문에 답하면 AI가 기승전결 시나리오를 자동으로 작성합니다.</div>
+    <div class="interview-sub">Gemini AI와 채팅으로 9가지 질문에 답하면 자동으로 시나리오가 완성됩니다.<br>
+    <span style="color:var(--accent2);">※ 상단에 Gemini API 키를 먼저 입력하세요.</span></div>
 
     <div class="progress-dots" id="progressDots"></div>
-
     <div class="chat-log" id="chatLog"></div>
 
     <div class="answer-row" id="answerRow">
-      <input type="text" id="answerInput" placeholder="답변을 입력하세요..." onkeydown="if(event.key==='Enter')submitAnswer()">
-      <button class="btn btn-primary" onclick="submitAnswer()">다음 →</button>
-    </div>
-
-    <div class="gen-scenario-bar" id="genScenarioBar">
-      <p>✦ AI가 시나리오를 작성 중입니다... 잠시만 기다려주세요</p>
-      <div class="gen-track2"><div class="gen-fill2" id="genFill2"></div></div>
+      <input type="text" id="answerInput" placeholder="답변을 입력하고 Enter 또는 → 버튼을 누르세요" onkeydown="if(event.key==='Enter')submitAnswer()" disabled>
+      <button class="btn btn-primary" onclick="submitAnswer()">→</button>
     </div>
   </div>
 </div>
@@ -577,7 +572,37 @@ let pickerIdx=null, pickerTmp={};
 // ══════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════
-function init(){ buildStyleGrid(); initInterview(); }
+function init(){
+  buildStyleGrid();
+  // API 키가 있으면 인터뷰 바로 시작, 없으면 키 입력 안내
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if(apiKey && apiKey.length > 10){
+    initInterview();
+  } else {
+    // 키 입력 안내 메시지 표시
+    const log = document.getElementById('chatLog');
+    log.innerHTML = `<div class="chat-q"><div class="avatar">AI</div><div class="bubble" style="border-color:var(--accent2);">
+      <strong style="color:var(--accent);">👋 안녕하세요!</strong><br><br>
+      시작하기 전에 <strong style="color:var(--accent2);">상단에 Gemini API 키</strong>를 입력해주세요.<br>
+      <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent3);">키 발급 받기 →</a><br><br>
+      키 입력 후 아래 버튼을 누르면 인터뷰가 시작됩니다.
+    </div></div>`;
+    document.getElementById('answerRow').innerHTML =
+      `<button class="btn btn-primary ml-auto" style="width:100%;justify-content:center;padding:0.875rem;" onclick="checkAndStart()">▶ API 키 확인 후 인터뷰 시작</button>`;
+  }
+}
+
+function checkAndStart(){
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if(!apiKey || apiKey.length <= 10){
+    toast('Gemini API 키를 먼저 입력하세요', 'error');
+    return;
+  }
+  document.getElementById('answerRow').innerHTML = `
+    <input type="text" id="answerInput" placeholder="답변을 입력하고 Enter 또는 → 버튼을 누르세요" onkeydown="if(event.key==='Enter')submitAnswer()" disabled>
+    <button class="btn btn-primary" onclick="submitAnswer()">→</button>`;
+  initInterview();
+}
 
 // ══════════════════════════════════════════════════════
 //  STYLE GRID
@@ -653,120 +678,32 @@ function renderPicker(){
 }
 
 // ══════════════════════════════════════════════════════
-//  STEP 0 — INTERVIEW
+//  STEP 0 — GEMINI 채팅 인터뷰
 // ══════════════════════════════════════════════════════
-const QUESTIONS=[
-  {q:'영상의 전체 시간은 얼마인가요?', hint:'예: 30초, 1분, 3분'},
-  {q:'영상의 주제 또는 핵심 메시지는 무엇인가요?', hint:'예: 브랜드 신뢰감, 일상의 소중함, 제품의 혁신성'},
-  {q:'영상의 주요 소재(장소·인물·오브젝트)는 무엇인가요?', hint:'예: 도심 카페, 20대 여성 1인, 커피잔'},
-  {q:'영상의 전체적인 분위기와 감정 흐름은 어떤가요?', hint:'예: 잔잔→긴장→여운, 밝고 경쾌하게 처음부터 끝까지'},
-  {q:'영상의 카테고리는 무엇인가요?', hint:'예: 브랜드 광고, 단편 다큐, 뮤직비디오, SNS 숏폼'},
-  {q:'자막의 스타일과 역할은 어떤가요?', hint:'예: 키워드 강조형, 내레이션 자막, 자막 없음'},
-  {q:'촬영 환경과 조건은 어떤가요?', hint:'예: 야외 자연광, 실내 스튜디오 조명, 인물 출연 없음'},
-  {q:'레퍼런스 영상이나 참고하고 싶은 스타일이 있나요?', hint:'없으면 "없음"으로 입력하세요'},
-  {q:'이 영상에서 반드시 피하고 싶은 것이 있나요?', hint:'예: 너무 어두운 톤, 빠른 컷, CG 과다 사용'},
-];
 
-let currentQ=0, answers=[];
+const SYSTEM_PROMPT = `당신은 10년 경력의 영상 시나리오 작가이자 촬영·편집 실무 경험이 풍부한 감독입니다.
+지금부터 사용자와 인터뷰를 진행하며 실제 제작 가능한 수준의 영상 시나리오를 완성해주세요.
 
-function initInterview(){
-  buildDots();
-  showQuestion(0);
-}
+[인터뷰 규칙]
+- 질문은 반드시 하나씩만 합니다.
+- 여러 질문을 한꺼번에 하지 마세요.
+- 사용자가 답변하면 짧게 공감한 뒤 다음 질문으로 넘어갑니다.
+- 반드시 아래 9개 질문을 순서대로 진행합니다.
 
-function buildDots(){
-  const wrap=document.getElementById('progressDots');
-  wrap.innerHTML=QUESTIONS.map((_,i)=>`<div class="dot ${i===0?'active':''}" id="dot-${i}"></div>`).join('');
-}
+[질문 순서]
+Q1. 영상의 전체 시간은 얼마인가요?
+Q2. 영상의 주제 또는 핵심 메시지는 무엇인가요?
+Q3. 영상의 주요 소재(장소·인물·오브젝트)는 무엇인가요?
+Q4. 영상의 전체적인 분위기와 감정 흐름은 어떤가요?
+Q5. 영상의 카테고리는 무엇인가요?
+Q6. 자막의 스타일과 역할은 어떤가요?
+Q7. 촬영 환경과 조건은 어떤가요?
+Q8. 레퍼런스 영상이나 참고하고 싶은 스타일이 있나요?
+Q9. 이 영상에서 반드시 피하고 싶은 것이 있나요?
 
-function updateDots(idx){
-  QUESTIONS.forEach((_,i)=>{
-    const d=document.getElementById(`dot-${i}`);
-    if(i<idx) d.className='dot done';
-    else if(i===idx) d.className='dot active';
-    else d.className='dot';
-  });
-}
+9개 질문이 모두 끝나면 반드시 아래 형식으로 시나리오를 작성합니다.
 
-function showQuestion(idx){
-  const log=document.getElementById('chatLog');
-  // Clear if first question
-  if(idx===0) log.innerHTML='';
-
-  const qData=QUESTIONS[idx];
-  const div=document.createElement('div');
-  div.className='chat-q';
-  div.innerHTML=`
-    <div class="avatar">AI</div>
-    <div class="bubble">
-      <div class="qnum">Q${idx+1} / ${QUESTIONS.length}</div>
-      ${qData.q}
-      <div style="margin-top:0.4rem;font-size:0.75rem;color:var(--text3);font-family:'Space Mono',monospace;">${qData.hint}</div>
-    </div>`;
-  // Typing animation
-  const bubble=div.querySelector('.bubble');
-  const originalContent=bubble.innerHTML;
-  const qnum=div.querySelector('.qnum').outerHTML;
-  bubble.innerHTML=qnum+`<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>`;
-  log.appendChild(div);
-  log.scrollTop=log.scrollHeight;
-
-  setTimeout(()=>{
-    bubble.innerHTML=originalContent;
-    document.getElementById('answerInput').value='';
-    document.getElementById('answerInput').focus();
-  },600);
-
-  updateDots(idx);
-}
-
-function submitAnswer(){
-  const input=document.getElementById('answerInput');
-  const val=input.value.trim();
-  if(!val) return;
-
-  // Show user answer bubble
-  const log=document.getElementById('chatLog');
-  const div=document.createElement('div');
-  div.className='chat-a';
-  div.innerHTML=`<div class="avatar">나</div><div class="bubble">${val}</div>`;
-  log.appendChild(div);
-  log.scrollTop=log.scrollHeight;
-
-  answers[currentQ]=val;
-  input.value='';
-  currentQ++;
-
-  if(currentQ<QUESTIONS.length){
-    setTimeout(()=>showQuestion(currentQ),400);
-  } else {
-    // All done — generate scenario
-    document.getElementById('answerRow').style.display='none';
-    document.getElementById('genScenarioBar').classList.add('on');
-    generateScenarioFromAnswers();
-  }
-}
-
-async function generateScenarioFromAnswers(){
-  const apiKey=document.getElementById('apiKey').value.trim();
-
-  const prompt=`당신은 10년 경력의 영상 시나리오 작가이자 촬영·편집 실무 경험이 풍부한 감독입니다.
-아래 인터뷰 답변을 바탕으로 실제 제작 가능한 수준의 영상 시나리오를 완성해주세요.
-
-[인터뷰 답변]
-Q1. 영상의 전체 시간: ${answers[0]}
-Q2. 주제/핵심 메시지: ${answers[1]}
-Q3. 주요 소재(장소·인물·오브젝트): ${answers[2]}
-Q4. 전체 분위기와 감정 흐름: ${answers[3]}
-Q5. 카테고리: ${answers[4]}
-Q6. 자막 스타일: ${answers[5]}
-Q7. 촬영 환경: ${answers[6]}
-Q8. 레퍼런스 스타일: ${answers[7]}
-Q9. 피하고 싶은 것: ${answers[8]}
-
-[시나리오 작성 규칙]
-반드시 기승전결 구조로 작성하고, 아래 형식을 정확히 따르세요.
-
+===SCENARIO_START===
 # 시나리오 제목
 부제목 (한 줄 콘셉트)
 
@@ -796,17 +733,16 @@ Q9. 피하고 싶은 것: ${answers[8]}
 | 클립 번호 | 시간 | 샷 사이즈 | 앵글 | 구도 | 내용 설명 | 카메라 움직임 | 트랜지션 | 그래픽/후반 효과 |
 |-----------|------|-----------|------|------|-----------|--------------|----------|------------------|
 
-[자막 표]
+### 자막 표
 | 클립 | 자막 내용 | 자막 스타일 | 노출 시간 |
 |------|-----------|-------------|-----------|
 
-[무료 푸티지 검색]
+### 무료 푸티지 검색
 | 클립 | 추천 사이트 | 직접 접속 링크 | 검색어 (한국어 + English) |
 |------|-------------|----------------|--------------------------|
 
-링크 형식: https://www.pexels.com/search/videos/검색어/ 또는 https://pixabay.com/videos/search/검색어/ 또는 https://mixkit.co/free-stock-video/?q=검색어
-
 (🟡 승 / 🔴 전 / 🟢 결 동일 형식으로 반복)
+===SCENARIO_END===
 
 [제작 현실성 규칙]
 - 한 씬에서 동일 샷 사이즈 연속 사용 금지
@@ -814,100 +750,157 @@ Q9. 피하고 싶은 것: ${answers[8]}
 - 도입부·마무리는 EWS/WS 위주
 - 글리치·UI 오버레이는 "후반 작업"으로 명시
 - 클립 최소 2초, 최대 8초
-- 감정 흐름이 씬마다 명확해야 함
-- 모든 링크는 실제 접속 가능한 형식으로`;
+- 푸티지 링크 형식: https://www.pexels.com/search/videos/검색어/`;
 
-  const bar=document.getElementById('genScenarioBar');
-  const row=document.getElementById('answerRow');
+// 대화 히스토리 (Gemini multi-turn용)
+let chatHistory = [];
+let interviewDone = false;
+let questionCount = 0;
 
-  function showSuccess(scenarioText){
-    document.getElementById('scenario').value=scenarioText;
-    const titleMatch=scenarioText.match(/^#\s+(.+)/m);
-    if(titleMatch) document.getElementById('projectTitle').value=titleMatch[1].trim();
-    bar.classList.remove('on');
-    const log=document.getElementById('chatLog');
-    const div=document.createElement('div');
-    div.className='chat-q';
-    div.innerHTML=`<div class="avatar">AI</div><div class="bubble" style="border-color:var(--green);"><strong style="color:var(--green);">✓ 시나리오 완성!</strong><br>시나리오가 생성되었습니다. 아래 버튼을 눌러 Shot List를 만들어보세요.</div>`;
-    log.appendChild(div);
-    log.scrollTop=log.scrollHeight;
-    row.style.display='flex';
-    row.innerHTML=`<button class="btn btn-primary ml-auto" style="width:100%;justify-content:center;padding:0.875rem;" onclick="goStep(1)">시나리오 확인 → SCENARIO 편집 →</button>`;
+function initInterview(){
+  chatHistory = [];
+  interviewDone = false;
+  questionCount = 0;
+  document.getElementById('chatLog').innerHTML = '';
+  document.getElementById('answerInput').value = '';
+  document.getElementById('answerInput').disabled = false;
+  document.getElementById('progressDots').innerHTML = '';
+  // 첫 질문 요청
+  sendToGemini('안녕하세요. 인터뷰를 시작해주세요. Q1부터 시작하세요.');
+}
+
+function appendBubble(role, text, extraStyle=''){
+  const log = document.getElementById('chatLog');
+  const div = document.createElement('div');
+  div.className = role === 'ai' ? 'chat-q' : 'chat-a';
+  const avatarLabel = role === 'ai' ? 'AI' : '나';
+  div.innerHTML = `<div class="avatar">${avatarLabel}</div><div class="bubble" style="${extraStyle}">${text}</div>`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+function appendTyping(){
+  const log = document.getElementById('chatLog');
+  const div = document.createElement('div');
+  div.className = 'chat-q';
+  div.id = 'typingIndicator';
+  div.innerHTML = `<div class="avatar">AI</div><div class="bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function removeTyping(){
+  const el = document.getElementById('typingIndicator');
+  if(el) el.remove();
+}
+
+async function sendToGemini(userMessage, isFirstMsg=false){
+  const apiKey = document.getElementById('apiKey').value.trim();
+
+  // 사용자 메시지 추가 (첫 시작 메시지는 UI에 안 보임)
+  if(!isFirstMsg && userMessage){
+    chatHistory.push({ role:'user', parts:[{text: userMessage}] });
+  } else if(isFirstMsg){
+    chatHistory.push({ role:'user', parts:[{text: userMessage}] });
   }
 
-  function showManualFallback(reason){
-    bar.classList.remove('on');
-    // Copy-ready prompt in textarea
-    document.getElementById('scenario').value=prompt;
-    const log=document.getElementById('chatLog');
-    const div=document.createElement('div');
-    div.className='chat-q';
-    div.innerHTML=`<div class="avatar">AI</div><div class="bubble" style="border-color:var(--accent2);">
-      <strong style="color:var(--accent2);">⚠ ${reason}</strong><br><br>
-      대신 <strong style="color:var(--accent);">SCENARIO 탭</strong>에 프롬프트를 자동으로 넣어뒀어요.<br>
-      아래 순서로 진행하세요:<br><br>
-      <span style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--text2);">
-      1. SCENARIO 탭 클릭 → 텍스트 전체 복사<br>
-      2. Claude.ai 또는 ChatGPT에 붙여넣기<br>
-      3. 받은 시나리오를 다시 SCENARIO 탭에 붙여넣기
-      </span>
-    </div>`;
-    log.appendChild(div);
-    log.scrollTop=log.scrollHeight;
-    row.style.display='flex';
-    row.innerHTML=`<button class="btn btn-primary ml-auto" style="width:100%;justify-content:center;padding:0.875rem;" onclick="goStep(1)">SCENARIO 탭에서 프롬프트 복사하기 →</button>`;
-  }
-
-  // API 키 없으면 바로 수동 안내
-  if(!apiKey || apiKey.length<=10){
-    showManualFallback('Gemini API 키가 입력되지 않았습니다.');
-    return;
-  }
+  // 타이핑 인디케이터
+  appendTyping();
+  document.getElementById('answerInput').disabled = true;
 
   try {
-    const res=await fetch(
+    const body = {
+      system_instruction: { parts:[{text: SYSTEM_PROMPT}] },
+      contents: chatHistory,
+      generationConfig: { maxOutputTokens: 8192, temperature: 0.8 }
+    };
+
+    const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          contents:[{parts:[{text:prompt}]}],
-          generationConfig:{maxOutputTokens:8192,temperature:0.7}
-        })
-      }
+      { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }
     );
 
-    // HTTP 에러 처리
     if(!res.ok){
-      const errData=await res.json().catch(()=>({}));
-      const errMsg=errData?.error?.message||`HTTP ${res.status}`;
-      // API 키 오류면 수동 안내
-      if(res.status===400||res.status===403){
-        showManualFallback(`API 키 오류: ${errMsg}`);
-      } else {
-        showManualFallback(`Gemini 오류 (${res.status}): ${errMsg}`);
-      }
-      return;
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
     }
 
-    const data=await res.json();
+    const data = await res.json();
+    const aiText = (data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').trim();
 
-    // 안전한 파싱
-    const parts=data?.candidates?.[0]?.content?.parts||[];
-    const scenarioText=parts.map(p=>p.text||'').join('').trim();
+    if(!aiText) throw new Error('빈 응답. API 키와 할당량을 확인하세요.');
 
-    if(!scenarioText){
-      // 빈 응답 — 수동 안내
-      showManualFallback('Gemini 응답이 비어있습니다. API 키를 확인하거나 아래 방법을 이용하세요.');
-      return;
+    // 히스토리에 AI 응답 추가
+    chatHistory.push({ role:'model', parts:[{text: aiText}] });
+
+    removeTyping();
+
+    // 시나리오 완성 감지
+    if(aiText.includes('===SCENARIO_START===')){
+      const scenarioRaw = aiText.split('===SCENARIO_START===')[1].split('===SCENARIO_END===')[0].trim();
+      const chatMsg = aiText.split('===SCENARIO_START===')[0].trim();
+      if(chatMsg) appendBubble('ai', chatMsg.replace(/\n/g,'<br>'));
+      // 성공 메시지
+      appendBubble('ai',
+        `<strong style="color:var(--green);">✓ 시나리오가 완성되었습니다!</strong><br>SCENARIO 탭에서 확인하고 필요하면 수정 후 Shot List를 생성하세요.`,
+        'border-color:var(--green);'
+      );
+      document.getElementById('scenario').value = scenarioRaw;
+      const titleMatch = scenarioRaw.match(/^#\s+(.+)/m);
+      if(titleMatch) document.getElementById('projectTitle').value = titleMatch[1].trim();
+      interviewDone = true;
+      // 입력창 → 다음 버튼으로 교체
+      document.getElementById('answerRow').innerHTML =
+        `<button class="btn btn-primary ml-auto" style="width:100%;justify-content:center;padding:0.875rem;" onclick="goStep(1)">시나리오 확인 → SCENARIO 편집 →</button>`;
+    } else {
+      // 일반 인터뷰 대화
+      questionCount++;
+      appendBubble('ai', aiText.replace(/\n/g,'<br>'));
+      document.getElementById('answerInput').disabled = false;
+      document.getElementById('answerInput').focus();
+      // 진행 도트 업데이트
+      updateProgressDots(questionCount);
     }
-
-    showSuccess(scenarioText);
 
   } catch(e){
-    // 네트워크 오류 등
-    showManualFallback(`네트워크 오류: ${e.message}`);
+    removeTyping();
+    appendBubble('ai',
+      `<strong style="color:var(--red);">⚠ 오류: ${e.message}</strong><br><span style="font-size:0.8rem;color:var(--text3);">API 키를 확인하거나 잠시 후 다시 시도하세요.</span>`,
+      'border-color:var(--red);'
+    );
+    document.getElementById('answerInput').disabled = false;
+    // 재시도 버튼 추가
+    const log = document.getElementById('chatLog');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary';
+    btn.style.cssText = 'margin:0.5rem auto;display:block;';
+    btn.textContent = '↻ 다시 시도';
+    btn.onclick = () => { btn.remove(); sendToGemini(userMessage, isFirstMsg); };
+    log.appendChild(btn);
+    log.scrollTop = log.scrollHeight;
   }
+}
+
+function updateProgressDots(count){
+  const total = 9;
+  const wrap = document.getElementById('progressDots');
+  wrap.innerHTML = Array.from({length:total},(_,i)=>{
+    let cls = 'dot';
+    if(i < count-1) cls += ' done';
+    else if(i === count-1) cls += ' active';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+}
+
+function submitAnswer(){
+  if(interviewDone) return;
+  const input = document.getElementById('answerInput');
+  const val = input.value.trim();
+  if(!val || input.disabled) return;
+  input.value = '';
+  appendBubble('user', val);
+  sendToGemini(val);
 }
 
 // ══════════════════════════════════════════════════════
