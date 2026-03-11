@@ -272,10 +272,11 @@ td select{background:var(--surface3);border:1px solid var(--border2);border-radi
 <!-- IMAGE MODEL SELECTOR -->
 <div class="img-model-bar">
   <span class="img-model-label">🖼 이미지 생성 모델</span>
-  <button class="model-btn" id="modelBtn-nano" onclick="setImgModel('nano')">Nano-Banana <span style="font-size:0.58rem;color:var(--green)">✓무료</span></button>
-  <button class="model-btn active" id="modelBtn-nano2" onclick="setImgModel('nano2')">Nano-Banana 2 <span style="font-size:0.58rem;color:var(--accent2)">$유료</span></button>
-  <button class="model-btn pro" id="modelBtn-nanoPro" onclick="setImgModel('nanoPro')">Nano-Banana Pro <span style="font-size:0.58rem;color:var(--accent2)">$유료·4K</span></button>
-  <span class="model-note" id="modelNote"><span class="paid-tag">$ 유료</span> &nbsp;<span style="opacity:0.7;font-size:0.85em">gemini-3.1-flash-image-preview</span></span>
+  <button class="model-btn" id="modelBtn-nano" onclick="setImgModel('nano')">Nano-Banana <span style="font-size:0.58rem;color:var(--text3)">≈₩54/장</span></button>
+  <button class="model-btn active" id="modelBtn-nano2" onclick="setImgModel('nano2')">Nano-Banana 2 <span style="font-size:0.58rem;color:var(--text3)">≈₩97/장</span></button>
+  <button class="model-btn pro" id="modelBtn-nanoPro" onclick="setImgModel('nanoPro')">Nano-Banana Pro <span style="font-size:0.58rem;color:var(--accent2)">≈₩195/장·4K</span></button>
+  <span class="model-note" id="modelNote"><span style="color:var(--text2)">≈₩97/장</span> &nbsp;<span style="opacity:0.7;font-size:0.85em">gemini-3.1-flash-image-preview</span></span>
+  <span style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--text3);margin-left:0.5rem;">💡 <a href="https://cloud.google.com/free" target="_blank" style="color:var(--green);text-decoration:none;">Google Cloud 신규가입 시 ₩428,361 크레딧 90일 무료 제공</a></span>
 </div>
 
 <!-- STEP 0 — INTERVIEW -->
@@ -1139,7 +1140,7 @@ function updateApiStatus(){
 
 // 모델 버튼 초기화 (페이지 로드 후)
 function initModelBtns(){
-  setImgModel('nano');
+  setImgModel('nano2');
 }
 function setRatio(btn,r){
   document.querySelectorAll('.ratio-btn').forEach(b=>b.classList.remove('active'));
@@ -1650,15 +1651,12 @@ STRICT RULES — MUST FOLLOW:
 let imgModel = 'nano2'; // default
 
 const MODEL_INFO = {
-  // ━━ 무료 (AI Studio 무료 키로 사용 가능) ━━━━━━━━━━━━━━━━━
-  // Nano Banana — gemini-2.5-flash-image : 공식 무료 할당량 제공, 가장 안정적
-  nano:    { name:'gemini-2.5-flash-image',          apiVer:'v1beta', tier:'free',       label:'Nano-Banana',           note:'<span class="free-tag">✓ 무료</span>' },
-
-  // ━━ 유료 (결제 API 키 필요 / 신규 무료 크레딧으로 일시 사용 가능) ━━
-  // Nano Banana 2 — gemini-3.1-flash-image-preview : Gemini 3.1 Flash Image
-  nano2:   { name:'gemini-3.1-flash-image-preview',  apiVer:'v1beta', tier:'paid',       label:'Nano-Banana 2',         note:'<span class="paid-tag">$ 유료</span><span style="font-size:0.6rem;color:var(--text3)"> (신규크레딧↑)</span>' },
-  // Nano Banana Pro — gemini-3-pro-image-preview : ⚠ 2026-03-09 셧다운
-  nanoPro: { name:'gemini-3-pro-image-preview',      apiVer:'v1beta', tier:'paid',       label:'Nano-Banana Pro',        note:'<span class="paid-tag">$ 유료 · 4K</span>' },
+  // Nano-Banana — gemini-2.5-flash-image : 1024px, ≈$0.039/장 (≈₩54)
+  nano:    { name:'gemini-2.5-flash-image',         apiVer:'v1beta', tier:'paid', label:'Nano-Banana',     note:'<span style="color:var(--text2)">≈₩54/장</span><span style="color:var(--text3);font-size:0.6rem"> · 1K px</span>' },
+  // Nano-Banana 2 — gemini-3.1-flash-image-preview : 1K px ≈$0.067/장 (≈₩97)
+  nano2:   { name:'gemini-3.1-flash-image-preview', apiVer:'v1beta', tier:'paid', label:'Nano-Banana 2',   note:'<span style="color:var(--text2)">≈₩97/장</span><span style="color:var(--text3);font-size:0.6rem"> · 1K px</span>' },
+  // Nano-Banana Pro — gemini-3-pro-image-preview : 2K ≈$0.134/장(≈₩195), 4K ≈$0.24/장(≈₩349)
+  nanoPro: { name:'gemini-3-pro-image-preview',     apiVer:'v1beta', tier:'paid', label:'Nano-Banana Pro', note:'<span style="color:var(--accent2)">≈₩195/장</span><span style="color:var(--text3);font-size:0.6rem"> · 2K px</span>' },
 };
 
 function setImgModel(id){
