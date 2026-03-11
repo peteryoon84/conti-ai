@@ -36,6 +36,21 @@ main{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:2rem;}
 .api-status{font-family:'Space Mono',monospace;font-size:0.7rem;padding:0.3rem 0.75rem;border-radius:20px;background:var(--surface2);border:1px solid var(--border);white-space:nowrap;}
 .api-status.ok{color:var(--green);border-color:var(--green);}
 .api-status.empty{color:var(--text3);}
+/* IMAGE MODEL SELECTOR */
+.img-model-bar{display:flex;align-items:center;gap:0.6rem;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent3);border-radius:8px;padding:0.65rem 1.25rem;margin-bottom:2rem;flex-wrap:wrap;}
+.img-model-label{font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--accent3);letter-spacing:0.08em;white-space:nowrap;}
+.model-btn{padding:0.35rem 0.9rem;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-family:'Space Mono',monospace;font-size:0.7rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.model-btn:hover{border-color:var(--accent3);color:var(--accent3);}
+.model-btn.active{background:var(--accent3);border-color:var(--accent3);color:#0a0a0f;font-weight:700;}
+.model-btn.pro{border-color:var(--accent2);}
+.model-btn.pro.active{background:var(--accent2);border-color:var(--accent2);}
+.model-note{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--text3);margin-left:auto;}
+.model-note .free-tag{color:var(--green);}
+.model-note .paid-tag{color:var(--accent2);}
+.model-btn.deprecated{border-color:var(--red);opacity:0.6;}
+.model-btn.deprecated:hover{border-color:var(--red);color:var(--red);}
+.model-btn.deprecated.active{background:var(--red);border-color:var(--red);}
+.err-detail{background:rgba(255,69,96,0.08);border:1px solid rgba(255,69,96,0.25);border-radius:6px;padding:0.5rem 0.75rem;margin-top:0.4rem;font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--red);line-height:1.5;word-break:break-all;}
 
 /* CARD */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.75rem;margin-bottom:1.25rem;}
@@ -253,6 +268,14 @@ td select{background:var(--surface3);border:1px solid var(--border2);border-radi
   <input type="password" id="apiKey" placeholder="AIza..." oninput="updateApiStatus()" autocomplete="off">
   <span class="api-status empty" id="apiStatus">미입력</span>
   <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--accent2);text-decoration:none;white-space:nowrap;">키 발급 →</a>
+</div>
+<!-- IMAGE MODEL SELECTOR -->
+<div class="img-model-bar">
+  <span class="img-model-label">🖼 이미지 생성 모델</span>
+  <button class="model-btn" id="modelBtn-nano" onclick="setImgModel('nano')">Nano-Banana <span style="font-size:0.58rem;color:var(--green)">✓무료</span></button>
+  <button class="model-btn active" id="modelBtn-nano2" onclick="setImgModel('nano2')">Nano-Banana 2 <span style="font-size:0.58rem;color:var(--accent2)">$유료</span></button>
+  <button class="model-btn pro" id="modelBtn-nanoPro" onclick="setImgModel('nanoPro')">Nano-Banana Pro <span style="font-size:0.58rem;color:var(--accent2)">$유료·4K</span></button>
+  <span class="model-note" id="modelNote"><span class="paid-tag">$ 유료</span> &nbsp;<span style="opacity:0.7;font-size:0.85em">gemini-3.1-flash-image-preview</span></span>
 </div>
 
 <!-- STEP 0 — INTERVIEW -->
@@ -1113,6 +1136,11 @@ function updateApiStatus(){
   el.textContent=k.length>10?'입력됨 ✓':'미입력';
   el.className=k.length>10?'api-status ok':'api-status empty';
 }
+
+// 모델 버튼 초기화 (페이지 로드 후)
+function initModelBtns(){
+  setImgModel('nano');
+}
 function setRatio(btn,r){
   document.querySelectorAll('.ratio-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); selRatio=r;
@@ -1570,7 +1598,16 @@ async function runAll(){
       boards[i].img=await callAPI(k,buildPrompt(boards[i]));
       boards[i].status='done';
     }catch(e){
-      boards[i].status='error'; boards[i].err=e.message;
+      const errMsg = e.message||'알 수 없는 오류';
+      // 모델 비활성화 감지 → 자동 fallback 안내
+      const isModelGone = errMsg.includes('400') || errMsg.includes('not found') || errMsg.includes('비활성화');
+      boards[i].status='error';
+      boards[i].err=errMsg;
+      boards[i].errDetail = isModelGone
+        ? '⚠ 모델이 비활성화되었을 수 있습니다. 상단에서 다른 모델로 전환 후 재생성해보세요.'
+        : errMsg;
+      showCardError(i, errMsg, boards[i].errDetail);
+      continue;
     }
     done++; updateCard(i);
     fill.style.width=`${done/total*100}%`;
@@ -1607,18 +1644,90 @@ STRICT RULES — MUST FOLLOW:
 - Professional director's storyboard quality.`;
 }
 
-async function callAPI(k,prompt){
-  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${k}`,{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseModalities:['IMAGE','TEXT']}})
+// ══════════════════════════════════════════════════════
+//  IMAGE MODEL STATE
+// ══════════════════════════════════════════════════════
+let imgModel = 'nano2'; // default
+
+const MODEL_INFO = {
+  // ━━ 무료 (AI Studio 무료 키로 사용 가능) ━━━━━━━━━━━━━━━━━
+  // Nano Banana — gemini-2.5-flash-image : 공식 무료 할당량 제공, 가장 안정적
+  nano:    { name:'gemini-2.5-flash-image',          apiVer:'v1beta', tier:'free',       label:'Nano-Banana',           note:'<span class="free-tag">✓ 무료</span>' },
+
+  // ━━ 유료 (결제 API 키 필요 / 신규 무료 크레딧으로 일시 사용 가능) ━━
+  // Nano Banana 2 — gemini-3.1-flash-image-preview : Gemini 3.1 Flash Image
+  nano2:   { name:'gemini-3.1-flash-image-preview',  apiVer:'v1beta', tier:'paid',       label:'Nano-Banana 2',         note:'<span class="paid-tag">$ 유료</span><span style="font-size:0.6rem;color:var(--text3)"> (신규크레딧↑)</span>' },
+  // Nano Banana Pro — gemini-3-pro-image-preview : ⚠ 2026-03-09 셧다운
+  nanoPro: { name:'gemini-3-pro-image-preview',      apiVer:'v1beta', tier:'paid',       label:'Nano-Banana Pro',        note:'<span class="paid-tag">$ 유료 · 4K</span>' },
+};
+
+function setImgModel(id){
+  imgModel = id;
+  Object.keys(MODEL_INFO).forEach(k=>{
+    const btn = document.getElementById(`modelBtn-${k}`);
+    if(btn) btn.classList.toggle('active', k===id);
   });
-  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${r.status}`);}
-  const d=await r.json();
-  for(const p of(d?.candidates?.[0]?.content?.parts||[]))
+  const info = MODEL_INFO[id];
+  const noteEl = document.getElementById('modelNote');
+  if(noteEl) noteEl.innerHTML = `${info.note} &nbsp;<span style="opacity:0.7;font-size:0.85em">${info.name}</span>`;
+
+}
+
+// ── 에러 상세 표시 헬퍼 ────────────────────────
+function showCardError(i, msg, detail){
+  if(boards[i]) {
+    boards[i].status = 'error';
+    boards[i].err = msg;
+    boards[i].errDetail = detail||'';
+  }
+  updateCard(i);
+  // 카드 안에 detail 박스 삽입
+  if(detail){
+    setTimeout(()=>{
+      const card = document.getElementById(`sbc-${i}`);
+      if(card && !card.querySelector('.err-detail')){
+        const box = document.createElement('div');
+        box.className = 'err-detail';
+        box.textContent = detail;
+        const info = card.querySelector('.sb-info');
+        if(info) info.prepend(box);
+      }
+    }, 50);
+  }
+}
+
+// ── 메인 API 호출 (모델별 분기) ────────────────
+async function callAPI(k, prompt){
+  const info = MODEL_INFO[imgModel];
+  if(!info){ throw new Error('알 수 없는 모델'); }
+
+  // ─ generateContent 방식 ─
+  const url = `https://generativelanguage.googleapis.com/${info.apiVer}/models/${info.name}:generateContent?key=${k}`;
+  const res = await fetch(url, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      contents:[{parts:[{text:prompt}]}],
+      generationConfig:{responseModalities:['IMAGE','TEXT']}
+    })
+  });
+  if(!res.ok){
+    const e = await res.json().catch(()=>({}));
+    const msg = e?.error?.message || `HTTP ${res.status}`;
+    const hint = res.status===400 ? '모델명 오류 또는 비활성화' :
+                 res.status===403 ? 'API 키 권한 없음 — 키 재확인' :
+                 res.status===429 ? '요청 한도 초과 — 잠시 후 재시도' :
+                 res.status===404 ? '모델을 찾을 수 없음 — 다른 모델 선택' : '';
+    throw new Error(`[${info.label}] ${msg}${hint?' ('+hint+')':''}`);
+  }
+  const d = await res.json();
+  for(const p of (d?.candidates?.[0]?.content?.parts||[]))
     if(p.inlineData?.mimeType?.startsWith('image/'))
       return `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
-  throw new Error('이미지 데이터 없음');
+  const reason = d?.candidates?.[0]?.finishReason;
+  const safety = d?.promptFeedback?.blockReason;
+  throw new Error(`[${info.label}] 이미지 없음${reason?' · '+reason:''}${safety?' · 차단:'+safety:''}`);
 }
+
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
 // ══════════════════════════════════════════════════════
@@ -1687,12 +1796,21 @@ function updBoard(i,field,val){
 async function applyAndRegen(i){
   const k=document.getElementById('apiKey').value.trim();
   if(!k){toast('API 키를 입력하세요','error');return;}
-  boards[i].status='generating'; boards[i].img=null; updateCard(i);
+  boards[i].status='generating'; boards[i].img=null; boards[i].errDetail=''; updateCard(i);
   try{
     boards[i].img=await callAPI(k,buildPrompt(boards[i]));
     boards[i].status='done';
   }catch(e){
-    boards[i].status='error'; boards[i].err=e.message; toast('실패: '+e.message,'error');
+    const errMsg = e.message||'알 수 없는 오류';
+    const isModelGone = errMsg.includes('400')||errMsg.includes('not found')||errMsg.includes('비활성화');
+    boards[i].status='error';
+    boards[i].err=errMsg;
+    boards[i].errDetail = isModelGone
+      ? '⚠ 모델 비활성화 가능성. 상단에서 다른 모델을 선택 후 재시도.'
+      : errMsg;
+    toast('오류: '+errMsg,'error');
+    showCardError(i, errMsg, boards[i].errDetail);
+    return;
   }
   updateCard(i);
 }
@@ -1854,6 +1972,7 @@ function openPrintView(){
 }
 
 init();
+initModelBtns();
 </script>
 </body>
 </html>
